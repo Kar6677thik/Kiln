@@ -1,0 +1,5 @@
+check status  detail
+D1    pass    running on Linux
+D9    warn    no C compiler (needed by K4)
+D16   pass    scripts use LF line endings
+2/3 passed (67%)

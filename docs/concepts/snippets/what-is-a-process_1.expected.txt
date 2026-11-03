@@ -1,0 +1,9 @@
+my pid (process id)      : <NUM>
+my parent's pid          : <NUM>
+  /proc/self/status -> Name:	<ANY>
+  /proc/self/status -> Pid:	<NUM>
+  /proc/self/status -> PPid:	<NUM>
+  /proc/self/status -> VmRSS:	<ANY>
+  /proc/self/status -> Threads:	<NUM>
+  child: pid <NUM> parent <NUM>
+child finished with exit code: 3

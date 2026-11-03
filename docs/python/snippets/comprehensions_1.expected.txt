@@ -1,0 +1,5 @@
+not passing: ['D4', 'D9']
+lookup table: {'D1': 'pass', 'D4': 'warn', 'D9': 'warn', 'D14': 'pass'}
+distinct statuses: ['pass', 'warn']
+any failure? False
+['d4: needs attention later', 'd9: needs attention later']

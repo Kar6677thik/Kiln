@@ -5,11 +5,11 @@
 
 | # | Primer (`docs/concepts/<slug>.md`) | Milestone | Status |
 |---|---|---|---|
-| 1 | `terminal-and-wsl` | K0 | ⏳ |
-| 2 | `git-basics` | K0 | ⏳ |
-| 3 | `what-is-a-process` | K0 | ⏳ |
-| 4 | `files-and-file-descriptors` | K0 | ⏳ |
-| 5 | `what-is-a-server` | K0 | ⏳ |
+| 1 | [`terminal-and-wsl`](terminal-and-wsl.md) | K0 | ✍️ |
+| 2 | [`git-basics`](git-basics.md) | K0 | ✍️ |
+| 3 | [`what-is-a-process`](what-is-a-process.md) | K0 | ✍️ |
+| 4 | [`files-and-file-descriptors`](files-and-file-descriptors.md) | K0 | ✍️ |
+| 5 | [`what-is-a-server`](what-is-a-server.md) | K0 | ✍️ |
 | 6 | `fork` | K1 | ⏳ |
 | 7 | `fork-and-threads` | K1 | ⏳ |
 | 8 | `signals` | K1 | ⏳ |

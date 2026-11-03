@@ -1,0 +1,17 @@
+def shout(func):
+    def wrapper(name):
+        return func(name).upper()
+    return wrapper
+
+def greet(name):
+    return "hello " + name
+
+greet("ada")
+loud = shout(greet)
+loud("ada")
+@shout
+def welcome(name):
+    return "welcome " + name
+
+welcome("ada")
+welcome.__name__

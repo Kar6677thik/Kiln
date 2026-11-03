@@ -1,0 +1,40 @@
+# Files git should never track. Each block says why. See docs/spec/08-repo-layout-and-tooling.md §4.
+
+# Python's compiled bytecode caches: regenerated automatically, differ per interpreter.
+__pycache__/
+*.py[cod]
+
+# A virtual environment inside the repo would live on the slow /mnt/c filesystem (ADR-003).
+# dev.sh puts venvs in ~/.cache/kiln/venvs instead; this line catches accidents.
+.venv/
+
+# Tool caches: safe to delete, rebuilt on demand.
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.hypothesis/
+
+# Coverage data and HTML reports.
+.coverage*
+htmlcov/
+
+# Build outputs.
+build/
+dist/
+*.egg-info/
+
+# Compiled extensions (K4 C extension, K8 Rust extension).
+*.so
+rust/kiln_native/target/
+
+# Experiment results are personal to each run; only the published ones are committed (ADR-022).
+results/*
+!results/published/
+
+# Upstream checkouts fetched by scripts/fetch-corpus.sh (K2).
+corpus/upstream/
+
+# Profiler outputs (K6).
+memray-*.bin
+*.prof
+*.svg.tmp

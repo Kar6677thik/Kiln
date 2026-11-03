@@ -1,0 +1,38 @@
+int("42")
+int("forty-two")
+def parse_port(text):
+    try:
+        port = int(text)
+    except ValueError:
+        print("not a number:", text)
+        return None
+    else:
+        print("parsed ok")
+        return port
+    finally:
+        print("finally always runs")
+
+parse_port("7340")
+parse_port("abc")
+class ConfigError(Exception):
+    pass
+
+def check_workers(n):
+    if n < 1:
+        raise ConfigError("workers must be >= 1 (got " + str(n) + ")")
+    return n
+
+check_workers(4)
+check_workers(0)
+try:
+    check_workers(0)
+except ConfigError as err:
+    print("caught:", err)
+
+def load(text):
+    try:
+        return int(text)
+    except ValueError as err:
+        raise ConfigError("bad config value") from err
+
+load("x")

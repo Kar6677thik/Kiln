@@ -1,0 +1,5 @@
+import logging
+log = logging.getLogger("kiln.demo")
+log.info("worker started")
+log.warning("queue is almost full")
+log.getEffectiveLevel(), logging.WARNING

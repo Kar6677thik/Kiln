@@ -1,0 +1,42 @@
+def add(a, b):
+    return a + b
+
+add(2, 3)
+add(b=10, a=1)
+def greet(name, greeting="Hello"):
+    return greeting + ", " + name + "!"
+
+greet("Ada")
+greet("Ada", greeting="Hi")
+def shout(text):
+    print(text.upper())
+
+result = shout("hi")
+print(result)
+def total(*numbers):
+    return sum(numbers)
+
+total(1, 2, 3)
+def describe(**options):
+    return options
+
+describe(workers=4, labs=True)
+def connect(host, *, timeout_s=10):
+    return host + " (timeout " + str(timeout_s) + "s)"
+
+connect("localhost", timeout_s=2)
+connect("localhost", 2)
+def remember(item, seen=[]):
+    seen.append(item)
+    return seen
+
+remember("a")
+remember("b")
+def remember_fixed(item, seen=None):
+    if seen is None:
+        seen = []
+    seen.append(item)
+    return seen
+
+remember_fixed("a")
+remember_fixed("b")

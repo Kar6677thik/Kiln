@@ -1,0 +1,7 @@
+1 + 2
+"kiln".upper()
+import sys
+sys.version_info[:2]
+x = 10
+x * 3
+print("hello from the REPL")

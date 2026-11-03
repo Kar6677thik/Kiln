@@ -1,0 +1,18 @@
+s = "héllo"
+len(s)
+b = s.encode("utf-8")
+b
+len(b)
+b.decode("utf-8")
+type(s), type(b)
+s[0]
+b[0]
+"abc" == b"abc"
+"abc" + b"abc"
+b"\xff".decode("utf-8")
+buf = bytearray()
+buf += b"abc"
+buf += b"def"
+buf
+bytes(buf[:4])
+len("😀"), len("😀".encode("utf-8"))

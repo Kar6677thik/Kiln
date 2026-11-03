@@ -1,0 +1,23 @@
+from enum import Enum, IntEnum, StrEnum
+class Color(Enum):
+    RED = 1
+    GREEN = 2
+
+Color.RED
+Color.RED.name, Color.RED.value
+Color(2)
+Color.RED == 1
+class Status(StrEnum):
+    PASS = "pass"
+    FAIL = "fail"
+
+Status.PASS
+Status.PASS == "pass"
+f"result: {Status.FAIL}"
+list(Status)
+Status("nope")
+class Level(IntEnum):
+    LOW = 1
+    HIGH = 2
+
+Level.HIGH > Level.LOW

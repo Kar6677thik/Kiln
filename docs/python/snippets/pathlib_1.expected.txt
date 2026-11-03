@@ -1,0 +1,6 @@
+first field of /proc/meminfo: MemTotal:
+ptrace_scope file exists: True
+ptrace_scope value is a digit: True
+is a directory: True
+has a cgroup.controllers file: True
+found some processes: True

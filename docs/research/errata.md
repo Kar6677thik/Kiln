@@ -125,8 +125,9 @@
   - the revert by observing GC behaviour (thresholds and `gc.get_stats()` shape, and the peak-RSS difference on the K7 workload)
   - against the 3.14.5 changelog
 - **Plan:** K0 gate (installability) and K7 gate (behaviour). If either fails, the K7 fallback is documented in the K7 spec.
+- **K0 result (2026-11-03, gate G0.1):** `uv python install 3.14.4 3.14.5` succeeded (uv 0.13.5), so installability is ✅. The behaviour half is still K7's job.
 - **Affects:** K0, K7.
-- **Status:** 🔍 to verify
+- **Status:** 🔍 to verify (installability ✅ verified in K0; behaviour pending K7)
 
 ## E-14: `gc.callbacks` is a collection hook, not a general GC-state hook
 - **Research claim:** §4 K3, "Catch `msgpack` re-enabling the GC with a `gc.callbacks` hook".
@@ -147,3 +148,10 @@
 - **Clarification:** Kiln's *forked* workers always end with `os._exit()` ([code-style §7 rule 6](../standards/code-style.md#7-fork-safety-rules)). That's required for correctness, so that the child never returns into the master's code. It means forked workers never run the final GC to begin with. The `worker.exit_via_os_exit` switch therefore only makes a measurable difference for **spawned** workers, and for the master itself. The K3 lab must measure the trick where it applies and explain why it's a no-op elsewhere.
 - **Affects:** K3.
 - **Status:** ✅ corrected (spec)
+
+## E-17: The newest 3.15 patch is 3.15.1, not 3.15.2
+- **Research claim:** the summary says Python 3.15 is "now 3.15.2".
+- **Correction:** on 2026-11-03, uv 0.13.5's index offered **3.15.1** as the newest 3.15 (and 3.15.1+freethreaded). That's what Kiln develops against. Nothing in the plan depends on the patch number, and ExperimentRecords store the exact version anyway.
+- **Evidence:** `uv python list --all-versions` and `uv python install 3.15 3.15t` in the K0 setup log ([tours/K0.md](../tours/K0.md#appendix-setup-log)).
+- **Affects:** K0 (records only).
+- **Status:** ✅ corrected

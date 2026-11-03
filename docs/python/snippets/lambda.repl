@@ -1,0 +1,15 @@
+double = lambda x: x * 2
+double(21)
+def double_def(x):
+    return x * 2
+
+double_def(21)
+type(double)
+names = ["kiln", "doctor", "ab"]
+sorted(names, key=lambda name: len(name))
+sorted(names, key=len)
+which = lambda name: None if name == "cc" else f"/usr/bin/{name}"
+which("cc")
+which("gdb")
+double.__name__
+double_def.__name__

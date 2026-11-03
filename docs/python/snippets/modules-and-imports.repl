@@ -1,0 +1,9 @@
+import math
+math.sqrt(16)
+from math import pi
+pi
+import json as j
+j.dumps({"workers": 4})
+import sys
+"json" in sys.modules
+import kiln_does_not_exist

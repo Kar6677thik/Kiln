@@ -1,0 +1,154 @@
+[
+  {
+    "id": "D1",
+    "title": "Running on Linux",
+    "status": "pass",
+    "detail": "sys.platform = linux",
+    "fix": "",
+    "needed_by": null
+  },
+  {
+    "id": "D2",
+    "title": "Inside WSL2",
+    "status": "info",
+    "detail": "WSL2 kernel 6.6.87.2-microsoft-standard-WSL2",
+    "fix": "",
+    "needed_by": null
+  },
+  {
+    "id": "D3",
+    "title": "Python version ≥ 3.13",
+    "status": "pass",
+    "detail": "running Python 3.15",
+    "fix": "",
+    "needed_by": null
+  },
+  {
+    "id": "D4",
+    "title": "Test-matrix interpreters installed",
+    "status": "pass",
+    "detail": "3.13, 3.14, 3.15, 3.15t",
+    "fix": "",
+    "needed_by": null
+  },
+  {
+    "id": "D5",
+    "title": "K7 interpreters (3.14.4, 3.14.5)",
+    "status": "pass",
+    "detail": "both installed",
+    "fix": "",
+    "needed_by": null
+  },
+  {
+    "id": "D6",
+    "title": "Free-threaded 3.15t works",
+    "status": "pass",
+    "detail": "sys._is_gil_enabled() → False",
+    "fix": "",
+    "needed_by": null
+  },
+  {
+    "id": "D7",
+    "title": "Virtual environment on ext4",
+    "status": "pass",
+    "detail": "venv at /home/Megatron/.cache/kiln/venvs/py3.15",
+    "fix": "",
+    "needed_by": null
+  },
+  {
+    "id": "D8",
+    "title": "Source location",
+    "status": "info",
+    "detail": "/mnt/c/Users/Karthik Reddy/Documents/Study/Projects/Kiln is on 9P; timing labs run from ~/kiln-bench (dev.sh bench-snapshot)",
+    "fix": "",
+    "needed_by": null
+  },
+  {
+    "id": "D9",
+    "title": "C compiler",
+    "status": "warn",
+    "detail": "cc not found",
+    "fix": "sudo apt install build-essential",
+    "needed_by": "K4"
+  },
+  {
+    "id": "D10",
+    "title": "Rust toolchain",
+    "status": "warn",
+    "detail": "cargo not found",
+    "fix": "see docs/spec/07-environment.md §9 (rustup)",
+    "needed_by": "K8"
+  },
+  {
+    "id": "D11",
+    "title": "ptrace_scope (attach tools)",
+    "status": "warn",
+    "detail": "ptrace_scope = 1: attaching to non-child processes is blocked",
+    "fix": "for a lab session: sudo sysctl kernel.yama.ptrace_scope=0 (docs/spec/07 §5 option B)",
+    "needed_by": "K5"
+  },
+  {
+    "id": "D12",
+    "title": "cgroup v2",
+    "status": "pass",
+    "detail": "controllers: cpuset cpu io memory hugetlb pids rdma",
+    "fix": "",
+    "needed_by": null
+  },
+  {
+    "id": "D13",
+    "title": "Memory-limited cgroup possible",
+    "status": "pass",
+    "detail": "systemd-run --user --scope works",
+    "fix": "",
+    "needed_by": null
+  },
+  {
+    "id": "D14",
+    "title": "smaps_rollup readable",
+    "status": "pass",
+    "detail": "Pss/Rss lines present",
+    "fix": "",
+    "needed_by": null
+  },
+  {
+    "id": "D15",
+    "title": "CPUs and RAM",
+    "status": "info",
+    "detail": "14 CPUs, 7.2 GiB RAM",
+    "fix": "",
+    "needed_by": null
+  },
+  {
+    "id": "D16",
+    "title": "Line endings (LF)",
+    "status": "pass",
+    "detail": "scripts/*.sh use LF",
+    "fix": "",
+    "needed_by": null
+  },
+  {
+    "id": "D17",
+    "title": "Lab tools",
+    "status": "warn",
+    "detail": "missing: gdb, strace, rsync",
+    "fix": "sudo apt install gdb strace rsync",
+    "needed_by": "K1"
+  },
+  {
+    "id": "D18",
+    "title": "Ports 7340/7341 free",
+    "status": "pass",
+    "detail": "both free",
+    "fix": "",
+    "needed_by": null
+  },
+  {
+    "id": "D19",
+    "title": "Debug tools on this interpreter",
+    "status": "pass",
+    "detail": "profiling.sampling, sys.remote_exec",
+    "fix": "",
+    "needed_by": null
+  }
+]

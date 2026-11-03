@@ -7,7 +7,7 @@
 
 | # | Milestone | Spec | Status | Branch | Lab report | Tour |
 |---|---|---|---|---|---|---|
-| K0 | Foundations: environment, tooling, first primers | [K0](K0-foundations.md) | 📝 specified | `milestone/k0-foundations` | — (setup log: appendix of `tours/K0.md`) | [tour](../tours/K0.md) |
+| K0 | Foundations: environment, tooling, first primers | [K0](K0-foundations.md) | 👀 awaiting learner review | `milestone/k0-foundations` | — (setup log: appendix of `tours/K0.md`) | [tour](../tours/K0.md) |
 | K1 | Supervisor: master/worker, signals, queue, reload, recycling, OOM detection | [K1](K1-supervisor.md) | 📝 specified | `milestone/k1-supervisor` | `K1-supervisor.md` | `K1.md` |
 | K2 | Start methods + ★ fork-assumption checker | [K2](K2-start-methods-forkcheck.md) | 📝 specified | `milestone/k2-start-methods` | `K2-forkcheck.md` | `K2.md` |
 | K3 | Copy-on-write lab (Instagram) | [K3](K3-copy-on-write.md) | 📝 specified | `milestone/k3-cow` | `K3-cow.md` | `K3.md` |

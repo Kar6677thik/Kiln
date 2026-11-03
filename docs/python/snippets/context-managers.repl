@@ -1,0 +1,37 @@
+from pathlib import Path
+import tempfile
+folder = tempfile.mkdtemp()
+path = Path(folder) / "notes.txt"
+with open(path, "w") as fh:
+    fh.write("hello\n")
+
+fh.closed
+with open(path) as fh:
+    print(fh.read())
+
+class Timer:
+    def __enter__(self):
+        print("enter: start timing")
+        return self
+    def __exit__(self, exc_type, exc, tb):
+        print("exit: stop timing; error was", exc_type)
+        return False
+
+with Timer() as t:
+    print("inside the block")
+
+with Timer():
+    1 / 0
+
+from contextlib import contextmanager
+@contextmanager
+def announce(name):
+    print("start", name)
+    try:
+        yield name.upper()
+    finally:
+        print("end", name)
+
+with announce("job") as value:
+    print("got", value)
+

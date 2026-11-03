@@ -1,0 +1,33 @@
+from dataclasses import dataclass, field
+@dataclass
+class CheckResult:
+    check_id: str
+    status: str
+    detail: str = ""
+
+r = CheckResult("D1", "pass")
+r
+r.status
+r == CheckResult("D1", "pass")
+r == CheckResult("D1", "fail")
+@dataclass
+class Job:
+    task: str
+    args: list = field(default_factory=list)
+
+a = Job("add")
+b = Job("add")
+a.args.append(1)
+a
+b
+@dataclass
+class Broken:
+    items: list = []
+
+@dataclass(frozen=True)
+class Point:
+    x: int
+    y: int
+
+p = Point(1, 2)
+p.x = 5

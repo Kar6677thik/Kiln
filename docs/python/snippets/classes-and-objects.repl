@@ -1,0 +1,31 @@
+class Worker:
+    def __init__(self, worker_id, capacity):
+        self.worker_id = worker_id
+        self.capacity = capacity
+        self.jobs_done = 0
+    def finish_job(self):
+        self.jobs_done += 1
+        return self.jobs_done
+
+w = Worker(0, capacity=1)
+w.worker_id
+w.finish_job()
+w.finish_job()
+w.jobs_done
+other = Worker(1, capacity=8)
+other.jobs_done
+type(w).__name__
+isinstance(w, Worker)
+class ThreadWorker(Worker):
+    def __init__(self, worker_id, threads):
+        super().__init__(worker_id, capacity=threads)
+        self.threads = threads
+    def describe(self):
+        return "worker " + str(self.worker_id) + " with " + str(self.threads) + " threads"
+
+t = ThreadWorker(2, threads=4)
+t.capacity
+t.finish_job()
+t.describe()
+isinstance(t, Worker)
+w.colour

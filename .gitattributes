@@ -1,0 +1,8 @@
+# WHY: Windows tools like to write CRLF ("\r\n") line endings. Bash scripts with CRLF fail
+# with confusing errors such as "$'\r': command not found". These rules make git store and
+# check out every text file with LF ("\n") endings. See docs/spec/07-environment.md §11.
+*       text=auto eol=lf
+*.sh    text eol=lf
+*.ps1   text eol=crlf
+*.png   binary
+*.whl   binary

@@ -1,0 +1,4 @@
+Unix (LF)      : b'first line\nsecond line\n'
+Windows (CRLF) : b'first line\r\nsecond line\r\n'
+lengths in bytes: 23 vs 25
+program env is asked to find: 'bash\r'

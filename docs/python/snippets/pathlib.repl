@@ -1,0 +1,14 @@
+from pathlib import Path
+folder = Path("/tmp") / "kiln-pathlib-demo"
+p = folder / "notes.txt"
+p
+p.name, p.suffix, p.stem
+p.parent
+folder.mkdir(exist_ok=True)
+p.write_text("hello\n", encoding="utf-8")
+p.read_text(encoding="utf-8")
+p.exists()
+(folder / "missing.txt").exists()
+Path("/proc/self/status").read_text().splitlines()[0]
+str(p)
+"/tmp" + "kiln-pathlib-demo"

@@ -1,0 +1,138 @@
+# pyproject.toml: the one file that describes the Kiln project to Python's tools.
+# Read docs/spec/08-repo-layout-and-tooling.md §2 for the reasoning behind every section.
+# TOML basics: [section] headers, key = value lines, "#" starts a comment.
+
+[project]
+name = "kiln"
+version = "0.1.0"
+description = "A pre-fork job server built from scratch to learn Python internals"
+readme = "README.md"
+requires-python = ">=3.13"          # the syntax floor (ADR-004)
+dependencies = []                   # ADR-005: the standard library only, at runtime
+
+[project.scripts]
+# Installing the project creates a `kiln` command that calls kiln.cli.main().
+kiln = "kiln.cli:main"
+
+[build-system]
+# uv_build is uv's own build backend: pure-Python, src layout, nothing to compile (spec/08 §2.1).
+# The version range tracks the uv minor version installed in K0 (uv 0.13.5).
+requires = ["uv_build>=0.13.5,<0.14"]
+build-backend = "uv_build"
+
+[dependency-groups]
+# PEP 735 dependency groups: named sets of extra tools, installed only on request.
+# Versions are pinned by uv.lock, not here (ADR-019).
+dev = ["pytest", "pytest-timeout", "hypothesis", "ruff", "mypy", "coverage"]  # coverage: ADR-027
+lab-k3 = ["msgpack"]
+lab-k6 = ["memray", "requests"]
+lab-k8 = ["maturin"]
+lab-k9 = []
+# WHY: lab-k4 ("kiln-gil-labs") and the "kiln-native" part of lab-k8 are path dependencies on
+# folders that K4 and K8 create. uv cannot lock a path that doesn't exist yet, so those
+# milestones add their entries (spec/08 §2.2 shows the end state).
+
+[tool.uv]
+default-groups = ["dev"]
+
+# ---------------------------------------------------------------------------------------------
+# Ruff: linter + formatter (spec/08 §2.3)
+# ---------------------------------------------------------------------------------------------
+[tool.ruff]
+line-length = 100
+target-version = "py313"            # check syntax against the 3.13 floor (ADR-004)
+src = ["src", "tests", "labs", "scripts"]
+# WHY: ruff can also reformat Python examples inside Markdown files, which would destroy the
+# hand-aligned comments in the specs and docs. Markdown is prose; keep ruff on .py files.
+extend-exclude = ["*.md"]
+
+[tool.ruff.lint]
+select = [
+  "E", "W",    # pycodestyle: basic style errors
+  "F",         # pyflakes: unused imports/variables, undefined names
+  "I",         # isort: import ordering
+  "B",         # flake8-bugbear: likely bugs (mutable defaults, loop-variable closures...)
+  "UP",        # pyupgrade: use modern syntax for py313
+  "SIM",       # simplifications
+  "C4",        # comprehension style
+  "PT",        # pytest style
+  "RUF",       # ruff-specific checks
+  "D",         # pydocstyle: docstrings exist and are well-formed
+  "ANN",       # annotations present
+  "S",         # flake8-bandit: security smells (pickle, eval, shell=True...)
+  "BLE",       # no blind `except Exception` without re-raise/log
+  "T20",       # no stray print() in src (CLI output goes through a helper)
+  "PTH",       # prefer pathlib
+]
+ignore = [
+  "D203",      # WHY: conflicts with D211; Google style puts no blank line before a class docstring
+  "D213",      # WHY: conflicts with D212; Google style starts the summary on the first line
+  "RUF001",    # WHY: our docs-facing strings use ✅ ⚠️ ❌ and "…" on purpose
+  "RUF002",    # WHY: same, inside docstrings
+  "RUF003",    # WHY: same, inside comments (e.g. "→" arrows)
+  "RUF005",    # WHY: `a + b` list concatenation is plainer for beginners than `[*a, *b]` (code-style §1)
+  "SIM108",    # WHY: code-style §1 prefers an explicit if/else block over a conditional expression
+]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.per-file-ignores]
+# WHY: assert is how pytest checks things; test docstrings are enforced by check_docs.py (DOC015).
+"tests/**" = ["S101", "S603", "ANN", "D100", "D104", "E501"]  # WHY (E501): long fixture strings read better unbroken
+# WHY: labs do dangerous things on purpose, and must carry a "# LAB:" tag.
+"labs/**" = ["S", "T20", "BLE"]
+# WHY: scripts talk to the user through print().
+"scripts/**" = ["T20"]
+"src/kiln/cli.py" = ["T20"]
+# WHY: documentation snippets are tiny teaching programs: they print, skip docstrings and
+# annotations, and sometimes demonstrate unsafe or "wrong" code on purpose.
+"docs/**" = ["D", "ANN", "T20", "S", "BLE", "B", "SIM", "PTH", "RUF", "E731", "E501", "INP001", "PT"]
+
+# ---------------------------------------------------------------------------------------------
+# mypy: static type checker (spec/08 §2.4)
+# ---------------------------------------------------------------------------------------------
+[tool.mypy]
+strict = true
+python_version = "3.13"
+files = ["src/kiln"]
+# Gated modules (newer syntax) are checked by a second mypy run; none exist yet in K0.
+exclude = ["src/kiln/bench/report/", "src/kiln/worker/executors/interpreters.py"]
+warn_unreachable = true
+
+# ---------------------------------------------------------------------------------------------
+# pytest (spec/08 §2.5, spec/09)
+# ---------------------------------------------------------------------------------------------
+[tool.pytest.ini_options]
+testpaths = ["tests", "src/kiln"]
+# --import-mode=importlib: import test files without adding their folders to sys.path, so the
+#   installed package (src layout) is what gets tested.
+# --doctest-modules: also run the ">>>" examples inside src/kiln docstrings.
+addopts = "-ra --strict-markers --strict-config --import-mode=importlib --doctest-modules -m 'not lab and not slow'"
+timeout = 30
+markers = [
+  "unit: fast, in-process, no subprocesses",
+  "integration: starts real Kiln processes",
+  "lab: short version of a milestone experiment (run with -m lab)",
+  "slow: > 10 s; excluded by default",
+  "snippets: runs documentation snippets",
+  "requires_ft: needs a free-threaded build (sys._is_gil_enabled exists and returns False)",
+  "requires_314: needs Python >= 3.14",
+  "requires_315: needs Python >= 3.15",
+  "requires_gcc: needs a C compiler (build-essential)",
+  "requires_cgroup: needs a writable cgroup v2 subtree (OOM labs)",
+  "requires_native: needs the kiln_native Rust extension built for this interpreter (K8)",
+]
+
+# ---------------------------------------------------------------------------------------------
+# coverage.py (spec/08 §2.6, spec/09 §9, ADR-027)
+# ---------------------------------------------------------------------------------------------
+[tool.coverage.run]
+source = ["kiln"]
+branch = true
+parallel = true
+concurrency = ["thread", "multiprocessing"]
+
+[tool.coverage.report]
+fail_under = 85
+omit = ["*/bench/report/*", "*/executors/interpreters.py", "*/labs/*"]

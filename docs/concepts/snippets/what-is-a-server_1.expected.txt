@@ -1,0 +1,6 @@
+server: listening on 127.0.0.1:<NUM>
+server: got b'hello kiln' from a client
+client: sent b'hello kiln', received b'HELLO KILN'
+server: got b'run job 42' from a client
+client: sent b'run job 42', received b'RUN JOB 42'
+server: closed

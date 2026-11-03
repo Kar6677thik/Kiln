@@ -1,0 +1,6 @@
+registered: ['add', 'img.resize']
+add(2, 3) = 5
+lookup by name: resized cat.png to 100px
+calling double with (4,)
+double returned 8
+name: double | doc: Return x times two.

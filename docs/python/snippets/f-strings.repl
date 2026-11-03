@@ -1,0 +1,13 @@
+name = "Ada"
+jobs = 3
+f"{name} ran {jobs} jobs"
+f"{jobs * 2} next time"
+f"{name!r}"
+f"{jobs=}"
+pi = 3.14159265
+f"{pi:.2f}"
+f"{1234567:,}"
+f"[{name:>8}]"
+f"[{name:<8}]"
+f"{0.256:.1%}"
+"not an f-string: {name}"

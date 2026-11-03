@@ -4,26 +4,30 @@
 
 ## 1. Planned notes, in reading order
 
+Status: ⏳ planned · ✍️ written · ✅ reviewed by the learner
+
 | # | Note (`docs/python/<slug>.md`) | Milestone | Status |
 |---|---|---|---|
-| 1 | `running-python-and-the-repl` | K0 | ⏳ |
-| 2 | `variables-and-types` | K0 | ⏳ |
-| 3 | `functions` | K0 | ⏳ |
-| 4 | `modules-and-imports` | K0 | ⏳ |
-| 5 | `classes-and-objects` | K0 | ⏳ |
-| 6 | `exceptions` | K0 | ⏳ |
-| 7 | `type-hints` | K0 | ⏳ |
-| 8 | `dataclasses` | K0 | ⏳ |
-| 9 | `context-managers` | K0 | ⏳ |
-| 10 | `decorators` | K0 | ⏳ |
-| 11 | `bytes-vs-str` | K0 | ⏳ |
-| 12 | `f-strings` | K0 | ⏳ |
-| 13 | `comprehensions` | K0 | ⏳ |
-| 14 | `enum` | K0 | ⏳ |
-| 15 | `pathlib` | K0 | ⏳ |
-| 16 | `logging-basics` | K0 | ⏳ |
-| 17 | `pytest-basics` | K0 | ⏳ |
-| 18 | `argparse` | K0 | ⏳ |
+| 1 | [`running-python-and-the-repl`](running-python-and-the-repl.md) | K0 | ✍️ |
+| 2 | [`variables-and-types`](variables-and-types.md) | K0 | ✍️ |
+| 3 | [`functions`](functions.md) | K0 | ✍️ |
+| 4 | [`modules-and-imports`](modules-and-imports.md) | K0 | ✍️ |
+| 5 | [`classes-and-objects`](classes-and-objects.md) | K0 | ✍️ |
+| 6 | [`exceptions`](exceptions.md) | K0 | ✍️ |
+| 7 | [`type-hints`](type-hints.md) | K0 | ✍️ |
+| 8 | [`dataclasses`](dataclasses.md) | K0 | ✍️ |
+| 9 | [`context-managers`](context-managers.md) | K0 | ✍️ |
+| 10 | [`decorators`](decorators.md) | K0 | ✍️ |
+| 11 | [`bytes-vs-str`](bytes-vs-str.md) | K0 | ✍️ |
+| 12 | [`f-strings`](f-strings.md) | K0 | ✍️ |
+| 13 | [`comprehensions`](comprehensions.md) | K0 | ✍️ |
+| 14 | [`enum`](enum.md) | K0 | ✍️ |
+| 15 | [`pathlib`](pathlib.md) | K0 | ✍️ |
+| 16 | [`logging-basics`](logging-basics.md) | K0 | ✍️ |
+| 17 | [`pytest-basics`](pytest-basics.md) | K0 | ✍️ |
+| 18 | [`argparse`](argparse.md) | K0 | ✍️ |
+| 18a | [`slicing`](slicing.md) | K0 | ✍️ |
+| 18b | [`lambda`](lambda.md) | K0 | ✍️ |
 | 19 | `struct`, `json`, `bytearray-and-memoryview` | K1 | ⏳ |
 | 20 | `slots-and-frozen-dataclasses`, `collections-deque`, `heapq`, `typing-protocol` | K1 | ⏳ |
 | 21 | `threading-basics`, `signal-module`, `os-module`, `socket-module`, `selectors-module` | K1 | ⏳ |
@@ -45,4 +49,20 @@
 
 | Feature | Note | First used in (file:line) | Milestone |
 |---|---|---|---|
-| *(empty until K0)* | | | |
+| `assert` | [pytest-basics](pytest-basics.md) | [`tests/snippets/test_snippets.py:100`](../../tests/snippets/test_snippets.py) | K0 |
+| `classes-and-objects` | [classes-and-objects](classes-and-objects.md) | [`src/kiln/doctor.py:55`](../../src/kiln/doctor.py) | K0 |
+| `comprehensions` | [comprehensions](comprehensions.md) | [`src/kiln/bench/records.py:392`](../../src/kiln/bench/records.py) | K0 |
+| `context-managers` | [context-managers](context-managers.md) | [`src/kiln/doctor.py:154`](../../src/kiln/doctor.py) | K0 |
+| `dataclasses` | [dataclasses](dataclasses.md) | [`src/kiln/doctor.py:76`](../../src/kiln/doctor.py) | K0 |
+| `decorators` | [decorators](decorators.md) | [`src/kiln/doctor.py:76`](../../src/kiln/doctor.py) | K0 |
+| `enum` | [enum](enum.md) | [`src/kiln/doctor.py:55`](../../src/kiln/doctor.py) | K0 |
+| `exceptions` | [exceptions](exceptions.md) | [`src/kiln/bench/records.py:139`](../../src/kiln/bench/records.py) | K0 |
+| `f-strings` | [f-strings](f-strings.md) | [`src/kiln/bench/records.py:69`](../../src/kiln/bench/records.py) | K0 |
+| `functions` | [functions](functions.md) | [`src/kiln/bench/records.py:59`](../../src/kiln/bench/records.py) | K0 |
+| `lambda` | [lambda](lambda.md) | [`tests/snippets/test_snippets.py:83`](../../tests/snippets/test_snippets.py) | K0 |
+| `modules-and-imports` | [modules-and-imports](modules-and-imports.md) | [`src/kiln/__main__.py:20`](../../src/kiln/__main__.py) | K0 |
+| `slicing` | [slicing](slicing.md) | [`scripts/check_docs.py:270`](../../scripts/check_docs.py) | K0 |
+| `star-args-and-unpacking` | [functions](functions.md) | [`tests/unit/test_doctor.py:63`](../../tests/unit/test_doctor.py) | K0 |
+| `type-hints` | [type-hints](type-hints.md) | [`src/kiln/bench/records.py:59`](../../src/kiln/bench/records.py) | K0 |
+
+The "first used in" line numbers are a snapshot from the end of K0. `check_docs.py` (DOC005) checks that every construct has a row; it doesn't check the line numbers.

@@ -40,6 +40,7 @@
 | [029](#adr-029) | Workers raise their own `oom_score_adj` to 500 | Accepted |
 | [030](#adr-030) | `labs.hold_gil` fault task, and the `kiln.client` module | Accepted |
 | [031](#adr-031) | Master connection limits are constants, not config | Accepted |
+| [032](#adr-032) | K0 tooling details (implementation choices) | Accepted (implementer, pending learner review) |
 
 ---
 
@@ -240,3 +241,22 @@
 ## ADR-031: Master connection limits are constants, not config
 - **Decision:** `MAX_CLIENT_OUTBUF = 8 MiB`, `ACCEPT_BATCH = 64` and `MAX_CLIENTS = 1024` are module constants in `master/connections.py`. Each has a `# WHY:` comment.
 - **Why:** These limits protect the master from slow or abusive clients. Nobody needs to tune them for the labs, and every config key is one more thing to document, validate and test.
+
+<a id="adr-032"></a>
+## ADR-032: K0 tooling details (implementation choices)
+- **Status:** Accepted (implementer, pending learner review)
+- **Context:** Building K0 surfaced small gaps between the specs and what the tools actually allow.
+- **Decisions:**
+  1. **Path dependencies arrive with their folders.** `lab-k4` (`kiln-gil-labs`) and the `kiln-native` part of `lab-k8` are added to `pyproject.toml` by K4 and K8. uv can't lock a path dependency whose folder doesn't exist yet. spec/08 §2.2 still shows the end state.
+  2. **Checker fixtures are built in `tmp_path`.** The K0 spec mentions fixture folders (`tests/fixtures/check_docs/…`, `tests/fixtures/boundaries_bad/`). The tests build those tiny repositories in pytest's temporary folder from strings instead, so each good and bad example sits next to its test. The behaviour (AC-0.6, AC-0.8) is unchanged.
+  3. **Ruff ignores Markdown** (`extend-exclude = ["*.md"]`). Ruff 0.17 reformats Python code blocks inside Markdown, which destroyed the hand-aligned spec examples.
+  4. **Extra ruff ignores**, each with a `# WHY:` in `pyproject.toml`:
+     - `RUF001`–`RUF003`: we use ✅/⚠️/❌ and arrows on purpose.
+     - `SIM108`, `RUF005`: an explicit `if/else` and `a + b` read more plainly than the "clever" forms (code-style §1).
+     - `E501` and `S603` in `tests/`: long fixture strings and test subprocesses.
+     - Docs snippets get the teaching-code ignores.
+  5. **Two extra Python notes**, [`slicing`](python/slicing.md) and [`lambda`](python/lambda.md), because K0's own code and tests use those constructs (DOC005).
+  6. **`check_docs.py` scopes:**
+     - Links from *planning* documents (spec, milestones, ADRs, templates, research, standards) may point at files a later milestone creates. Links from *learning* documents may not.
+     - `tests/unit/test_check_docs.py` is skipped by the tag and doc-mention scans, because its string literals are deliberately broken examples.
+- **Consequences:** None changes user-visible behaviour or a learning objective. If the learner disagrees with any of them, each is a small, local change.

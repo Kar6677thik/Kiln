@@ -1,0 +1,13 @@
+nums = [1, 2, 3, 4, 5]
+squares = []
+for n in nums:
+    squares.append(n * n)
+
+squares
+[n * n for n in nums]
+[n for n in nums if n % 2 == 0]
+{n: n * n for n in nums}
+{len(word) for word in ["a", "bb", "cc", "ddd"]}
+gen = (n * n for n in nums)
+sum(gen)
+sum(gen)

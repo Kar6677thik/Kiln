@@ -1,0 +1,3 @@
+level=DEBUG logger=kiln.master event=worker_spawned
+[INFO] worker_ready
+level=INFO logger=kiln.master event=worker_ready

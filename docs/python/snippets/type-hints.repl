@@ -1,0 +1,12 @@
+def double(n: int) -> int:
+    return n * 2
+
+double(4)
+double("ab")
+double.__annotations__
+timeout_s: float = 2.5
+names: list[str] = ["a", "b"]
+def find(name: str) -> int | None:
+    return None
+
+print(find("x"))

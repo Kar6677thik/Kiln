@@ -1,0 +1,7 @@
+string typo equals 'fail'? False
+enum typo: type object 'Status' has no attribute 'FIAL'
+PASS  value='pass'  shown as OK
+WARN  value='warn'  shown as !!
+FAIL  value='fail'  shown as XX
+INFO  value='info'  shown as --
+from JSON text back to a member: warn True

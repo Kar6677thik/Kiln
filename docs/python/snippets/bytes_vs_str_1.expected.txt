@@ -1,0 +1,8 @@
+characters: 12
+bytes:      16
+raw bytes:  b'na\xc3\xafve caf\xc3\xa9 \xe2\x98\x95'
+first 6 bytes as numbers 0-255: [110, 97, 195, 175, 118, 101]
+round trip ok: True
+decoded as latin-1: <ANY>
+buffer has 31 bytes: b'{"type":"ping"}{"type":"stats"}'
+took: b'{"type":"ping"}' | left: b'{"type":"stats"}'
