@@ -42,6 +42,7 @@ from kiln.client import KilnClient
 from kiln.config import ConfigError, load_config
 from kiln.errors import KilnError
 from kiln.master.arbiter import Arbiter
+from kiln.memory import memtable
 
 EXIT_USAGE = 2
 
@@ -305,7 +306,53 @@ def build_parser() -> argparse.ArgumentParser:
     _add_server_commands(subcommands)
     _add_client_commands(subcommands)
     _add_bench_commands(subcommands)
+    mem = subcommands.add_parser(
+        "mem",
+        help="show RSS/PSS/USS/shared memory of processes (K3)",
+        description="Read /proc/<pid>/smaps_rollup and print one row per process.",
+        epilog=memtable.HELP_COLUMNS,
+        # WHY: keeps the column list's line breaks in --help.
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    mem.add_argument("pids", nargs="*", type=int, metavar="PID", help="process ids to show")
+    mem.add_argument(
+        "--children-of", type=int, metavar="PID", help="a master pid: show it and its workers"
+    )
+    mem.add_argument("--json", action="store_true", help="print bytes as JSON")
+    mem.add_argument(
+        "--watch", type=float, metavar="SECONDS", help="repeat every SECONDS until Ctrl-C"
+    )
     return parser
+
+
+def _cmd_mem(args: argparse.Namespace) -> int:
+    """`kiln mem`: print the memory table once, or every --watch seconds.
+
+    Why:
+        The K3 lab's question ("how much is really shared?") answered from the shell.
+
+    Args:
+        args: parsed arguments.
+
+    Returns:
+        0, or 2 if no process was given.
+    """
+    if not args.pids and args.children_of is None:
+        print("kiln mem: give PIDs or --children-of PID", file=sys.stderr)
+        return EXIT_USAGE
+    while True:
+        rows = memtable.collect(args.pids, args.children_of)
+        if args.json:
+            _out(json.dumps(memtable.to_json(rows), indent=2))
+        else:
+            _out(memtable.render_text(rows))
+        if not args.watch:
+            return 0
+        try:
+            time.sleep(args.watch)
+        except KeyboardInterrupt:
+            return 0
+        _out("")
 
 
 def _cmd_doctor(args: argparse.Namespace) -> int:
@@ -572,6 +619,7 @@ def main(argv: list[str] | None = None) -> int:
         "stop": _cmd_signal,
         "scale": _cmd_signal,
         "bench": _cmd_bench,
+        "mem": _cmd_mem,
     }
     handler = handlers.get(args.command)
     if handler is None:

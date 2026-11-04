@@ -1,0 +1,3 @@
+page size: <NUM> bytes; 64 MiB = <NUM> pages
+after reserving 64 MiB: page faults +<NUM>, RSS +<NUM> MiB
+after touching 32 MiB (<NUM> pages): page faults +<NUM>, RSS +<NUM> MiB

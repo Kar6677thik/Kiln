@@ -44,6 +44,7 @@
 | [033](#adr-033) | K1 import-boundary additions | Accepted (implementer, pending learner review) |
 | [034](#adr-034) | K1 implementation details | Accepted (implementer, pending learner review) |
 | [035](#adr-035) | K2 implementation details (launchers) | Accepted (implementer, pending learner review) |
+| [036](#adr-036) | K3 implementation details (memory, GC modes, gcwatch) | Accepted (implementer, pending learner review) |
 
 ---
 
@@ -308,4 +309,25 @@
   6. **Lab K2 (a) makes its own ext4 copy** (`~/kiln-bench/{src,examples,labs}`, with `shutil.copytree`) instead of using `scripts/bench-snapshot.sh`, because that script needs `rsync`, which isn't installed yet (it needs `sudo apt install rsync`). The servers run with `PYTHONPATH=<snapshot>/src` so `kiln` itself is read from ext4.
   7. **The heavy lab app holds one 100 MiB `bytes` object** made with `os.urandom` (`labs/k2/heavy_app.py`). Random bytes force real pages (a zero-filled buffer might never be backed by memory), and a single object keeps the copy-on-write sharing almost perfect. How many small objects behave instead is K3's question.
   8. **A worker announces `retiring` *before* the result of its last job** (amends ADR-034 §5). Previously the result went first: the master saw a free slot and could send one more `run` before the announcement arrived, so a worker with a limit of 15 jobs occasionally did 16. Announcing first means the master never refills that slot. Found by `test_max_jobs_with_jitter_recycles_between_10_and_15[forkserver]`; the race existed under fork too, and forkserver's timing exposed it.
+
+<a id="adr-036"></a>
+## ADR-036: K3 implementation details (memory, GC modes, gcwatch)
+- **Status:** Accepted (implementer, pending learner review)
+- **Decisions:**
+  1. **The preload graph is sized with tracemalloc on a sample.** The first 5,000 records are traced, giving bytes per record; the rest are built untraced. Tracing the whole build made the process grow by 817 MiB for a 300 MiB graph and kept that memory after `tracemalloc.stop()` ([errata E-21](research/errata.md#e-21-tracemallocs-own-bookkeeping-can-dwarf-what-it-measures)). `tests/unit/test_preload.py` checks the estimate against a fully traced build.
+  2. **New config key `labs.preload_composition`** (`mortal` | `immortal-heavy`) so lab (b) can switch the graph's composition the same way as every other setting (spec/05 updated).
+  3. **The four K3 lab tasks take an optional `hold_ms`.** The dispatcher sends each job to the lowest-numbered free worker, so a burst of instant jobs all landed on worker 0, and the "every worker did X" phase protocol (K3 §5.9) never reached worker 3. Holding each worker 300 ms after the measured work spreads the burst (spec/03 §7 updated).
+  4. **`kiln.launch` may import `kiln.labs`** (amends the ADR-033 allow-table): the forkserver builds the preload graph, because it is the process whose memory forkserver workers share.
+  5. **New modules `kiln/memory/exittrick.py` and `kiln/memory/memtable.py`** (spec/01 updated). The exit trick's handler reads the exit code from module state set just before `sys.exit`, since atexit handlers get no arguments at exit time.
+  6. **The exit trick's probe is an unreachable cycle made in an atexit handler**, not a module-level `__del__` (errata E-23).
+  7. **gcwatch semantics.**
+     - Each layer reports **once per flip**; it re-arms when the GC is seen off again. Without this, the collection sentinel logged 386 events in one run.
+     - Under `threshold0` (the GC is enabled but never automatic) and in a `freeze` *child* (which enables the GC on purpose), only the shim reports, labelled as harmless or informational.
+     - A forked worker uninstalls the watch it inherited and installs its own.
+     - Logging lives in `gcmodes.log_gc_event`, because `gcwatch.py` must stay importable without Kiln (K7).
+  8. **`worker.memory_metric = pss | uss`.** The master reads `/proc/<pid>/smaps_rollup` inside `check_rss`, which already runs only every 5 ticks (5 s); the worker reads its own after each job. RSS still comes from the heartbeats.
+  9. **`kiln mem` roles come from the process tree:** the `--children-of` root is the master, a child running `kiln.launch.forkserver_main` is the forkserver (its children are workers), and any other child is a worker. A forked worker's command line is identical to its master's, so the command line alone can't tell them apart.
+  10. **Bug fix:** `shutdown_finished duration_ms` was measured from the master's start instead of the start of the shutdown. It is now measured from `shutdown_started`, as spec/06 says. Lab (d) needs it.
+  11. **Lab (d), part 2 (forked workers)** reads "what a final collection would cost" from lab (a)'s P3 → P4 step (an explicit `gc_collect(2)` on every worker), rather than running a separate experiment.
+  12. **`freeze` freezes once per process, before the first fork.** The first version froze before *every* fork. On 3.15t, `gc.freeze()` writes a bit into every object's header, so re-freezing made the master rewrite pages it already shared with the workers forked earlier. Those workers then each held about 62 MiB of private copies at P0, while the last-forked worker had 3.9 MiB (records in `results/published/K3/cow-refreeze-before-fix/`). On the GIL builds freeze only moves list pointers, and the four workers were identical (3.3–3.4 MiB), so those records stand.
 

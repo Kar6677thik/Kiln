@@ -34,8 +34,8 @@ Status: ⏳ planned · ✍️ written · ✅ reviewed by the learner
 | 22 | [`uuid`](uuid.md), [`time-monotonic`](time-monotonic.md), [`hypothesis-basics`](hypothesis-basics.md), [`tomllib`](tomllib.md), [`importlib`](importlib.md), [`inspect`](inspect.md), [`asyncio-first-look`](asyncio-first-look.md) | K1 | ✍️ |
 | 23 | [`if-name-main`](if-name-main.md), [`pickle-and-reduce`](pickle-and-reduce.md), [`runpy`](runpy.md), [`closures`](closures.md), [`functools-partial`](functools-partial.md) | K2 | ✍️ |
 | 24 | [`ast-module`](ast-module.md), [`symtable-module`](symtable-module.md), [`multiprocessing-basics`](multiprocessing-basics.md) | K2 | ✍️ |
-| 25 | `gc-module`, `atexit`, `sys-getrefcount`, `monkeypatching` | K3 | ⏳ |
-| 26 | `import-hooks-meta-path`, `ctypes-basics`, `traceback-module`, `tracemalloc-basics` | K3 | ⏳ |
+| 25 | [`gc-module`](gc-module.md), [`atexit`](atexit.md), [`sys-getrefcount`](sys-getrefcount.md), [`monkeypatching`](monkeypatching.md) | K3 | ✍️ |
+| 26 | [`import-hooks-meta-path`](import-hooks-meta-path.md), [`ctypes-basics`](ctypes-basics.md), [`traceback-module`](traceback-module.md), [`tracemalloc-basics`](tracemalloc-basics.md) | K3 | ✍️ |
 | 27 | `threading`, `concurrent-futures`, `async-await-basics`, `asyncio-run`, `locks` | K4 | ⏳ |
 | 28 | `async-await-deep-dive`, `asyncio-streams`, `asyncio-taskgroup`, `asyncio-timeout` (+ `contextvars` if used) | K5 | ⏳ |
 | 29 | `functools-lru-cache`, `weakref`, `del-and-finalizers` | K6 | ⏳ |
@@ -64,6 +64,7 @@ Status: ⏳ planned · ✍️ written · ✅ reviewed by the learner
 | `f-strings` | [f-strings](f-strings.md) | [`src/kiln/bench/records.py:69`](../../src/kiln/bench/records.py) | K0 |
 | `functions` | [functions](functions.md) | [`src/kiln/bench/records.py:59`](../../src/kiln/bench/records.py) | K0 |
 | `generators` | [context-managers](context-managers.md) (a function with `yield` pauses there; pytest fixtures use the same idea) | [`tests/support/kiln_helpers.py`](../../tests/support/kiln_helpers.py) | K1 |
+| `global-and-nonlocal` | [closures](closures.md) (`nonlocal` in a nested function, `global` for a module variable) | [`src/kiln/labs/preload.py`](../../src/kiln/labs/preload.py) | K3 |
 | `lambda` | [lambda](lambda.md) | [`tests/snippets/test_snippets.py:83`](../../tests/snippets/test_snippets.py) | K0 |
 | `modules-and-imports` | [modules-and-imports](modules-and-imports.md) | [`src/kiln/__main__.py:20`](../../src/kiln/__main__.py) | K0 |
 | `protocols` | [typing-protocol](typing-protocol.md) | [`src/kiln/worker/executors/base.py:31`](../../src/kiln/worker/executors/base.py) | K1 |

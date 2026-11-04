@@ -1,0 +1,4 @@
+child: private dirty right after fork        + <ANY> MiB
+child: after reading all 64 MiB of bytes     + <ANY> MiB
+child: after writing 16 MiB of bytes         + <ANY> MiB
+child: after reading 300,000 str objects     + <ANY> MiB more

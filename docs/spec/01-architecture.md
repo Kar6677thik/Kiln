@@ -174,7 +174,9 @@ src/kiln/
   memory/
     procfs.py            K1/K3  read /proc/<pid>/status, smaps_rollup (RSS, PSS, USS, shared)
     gcmodes.py           K3  apply worker.gc_mode (disabled / threshold0 / freeze recipe) in parent and child
-    gcwatch.py           K3/K7  gc.callbacks hooks: pause histogram, who-enabled-gc detector
+    gcwatch.py           K3/K7  who-enabled-gc detector (shim, import flip, poll/sentinel); K7 pause histogram
+    exittrick.py         K3  worker.exit_via_os_exit: os._exit from the last atexit handler
+    memtable.py          K3  the `kiln mem` table (RSS/PSS/USS/shared per process)
   gateway/               K5
     __main__.py, server.py, http11.py, routes.py, kpclient.py, backpressure.py, watchdog.py, metrics.py
   native/                K8  pure-Python reference validator (+ Rust crate lives in rust/kiln_native/)
@@ -187,7 +189,7 @@ src/kiln/
     report/              K9  t-string HTML renderer (3.14+ only)
   labs/                  K1+ built-in lab tasks (registered only when labs.enabled = true)
     tasks.py             sleep, burn_cpu, alloc, touch_preloaded, crash, hold_gil, leak_* ...
-    preload.py           K3  builds the labs.preload_mb object graph (imported by the master or forkserver)
+    preload.py           K3  builds the labs.preload_mb object graph (in the master, the forkserver, or each spawned worker)
 ```
 
 **Dependency direction rule:** `protocol`, `errors` and `logsetup` form the "core" layer and import nothing else from Kiln (`protocol` may import `errors`). `master` and `worker` import `protocol`, `config`, `app` and `memory`, but **never each other**. `gateway` imports only `protocol`, `config` and `bench.records`. `client` imports only the core layer and `config`. `native` imports only the core layer, and `master`/`gateway` may import `native` (K8). `cli` may import everything. `ValidationError` and `FrameDecodeError` live in `errors.py`. `forkcheck` imports nothing else from Kiln. K0 adds an import-linter-style check, written as a small pytest test that parses imports with `ast`, to enforce this.

@@ -90,8 +90,8 @@ RULES: dict[str, Rule] = {
     "worker.memory_metric": Rule("str", "rss", choices=("rss", "pss", "uss")),
     "worker.gc_mode": Rule(
         "str", "default", choices=("default", "disabled", "threshold0", "freeze")
-    ),  # NOT YET USED (K3)
-    "worker.exit_via_os_exit": Rule("bool", False),  # NOT YET USED (K3)
+    ),
+    "worker.exit_via_os_exit": Rule("bool", False),
     "queue.max_size": Rule("int", 50_000, minimum=1),
     "queue.retry_after_s": Rule("float", 1.0, minimum=0),
     "jobs.default_timeout_s": Rule("float", 30.0, strictly_positive=True),
@@ -113,8 +113,10 @@ RULES: dict[str, Rule] = {
     "gateway.watchdog.threshold_ms": Rule("int", 100, minimum=1),
     "debug.enabled": Rule("bool", False),
     "labs.enabled": Rule("bool", False),
-    "labs.preload_mb": Rule("int", 0, minimum=0),  # NOT YET USED (K3)
-    "labs.gc_watch": Rule("bool", False),  # NOT YET USED (K3)
+    "labs.preload_mb": Rule("int", 0, minimum=0),
+    "labs.gc_watch": Rule("bool", False),
+    # K3 lab (b), ADR-036: what the preload graph's leaf values are made of.
+    "labs.preload_composition": Rule("str", "mortal", choices=("mortal", "immortal-heavy")),
     "log.level": Rule("str", "INFO", choices=("DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL")),
     "log.format": Rule("str", "kv", choices=("kv", "json")),
     "log.file": Rule("str", ""),
@@ -268,6 +270,7 @@ class LabsConfig:
     enabled: bool
     preload_mb: int
     gc_watch: bool
+    preload_composition: str
 
 
 @dataclass(frozen=True, slots=True)

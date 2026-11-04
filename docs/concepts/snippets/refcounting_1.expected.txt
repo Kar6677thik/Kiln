@@ -1,0 +1,10 @@
+refcount of a fresh object: <NUM> (1 for 'a' + 1 for the argument)
+after b = a and a list holding it twice: <NUM>
+after deleting those references: <NUM>
+del a (count reaches 0):
+  -> the Thing was freed
+... freed immediately, no garbage collector involved
+del x (it still refers to itself, so its count stays at 1):
+... nothing printed: refcounting alone can't free a cycle
+  -> the cyclic Thing was freed
+gc.collect() found <NUM> unreachable objects

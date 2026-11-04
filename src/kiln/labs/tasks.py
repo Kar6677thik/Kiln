@@ -16,9 +16,11 @@ READ FIRST
 
 MILESTONE
     Introduced in K1 (echo, sleep, burn_cpu, alloc, crash, raise, hold_gil). K2 adds random_probe.
+    K3 adds touch_preloaded, churn, gc_collect and gc_stats.
 """
 
 import ctypes
+import gc
 import os
 import random
 import re
@@ -26,6 +28,7 @@ import signal
 import time
 
 from kiln.app import App
+from kiln.labs import preload
 
 MIB = 1024 * 1024
 # LAB: memory held on purpose by labs.alloc(hold=True), so a worker grows until it is
@@ -187,6 +190,121 @@ def random_probe() -> int:
     return random.getrandbits(64)
 
 
+def _hold(hold_ms: float) -> None:
+    """Stay busy for hold_ms after a K3 task's real work.
+
+    Why:
+        The dispatcher sends each job to the lowest-numbered free worker, so a burst of
+        instant jobs all lands on worker 0. Holding each worker briefly makes a burst of
+        2 × workers jobs spread over all of them, which the K3 lab's "every worker ran X"
+        phases need (ADR-036). The hold happens after the measurement, so it changes nothing.
+
+    Args:
+        hold_ms: how long, in milliseconds (0 = return at once).
+    """
+    if hold_ms > 0:
+        time.sleep(hold_ms / 1000)
+
+
+def touch_preloaded(fraction: float, hold_ms: float = 0) -> dict[str, object]:
+    """Read `fraction` of the preloaded K3 graph (see kiln.labs.preload.touch).
+
+    Why:
+        The "copy-on-read" workload: reading shared objects writes their refcounts, so the
+        pages holding them get copied into this worker (docs/concepts/copy-on-write.md).
+
+    Args:
+        fraction: 0.0–1.0.
+        hold_ms: stay busy this long afterwards (see _hold).
+
+    Returns:
+        {"visited": records read, "pid": this worker's pid}.
+
+    Raises:
+        RuntimeError: no graph was preloaded (labs.preload_mb = 0).
+    """
+    if preload.GRAPH is None:
+        raise RuntimeError("no preload graph: set labs.preload_mb > 0")
+    visited = preload.touch(preload.GRAPH, fraction)
+    _hold(hold_ms)
+    return {"visited": visited, "pid": os.getpid()}
+
+
+def churn(n: int, hold_ms: float = 0) -> dict[str, object]:
+    """Create and drop `n` small reference cycles and short-lived dicts.
+
+    Why:
+        Every new container bumps the GC's generation-0 counter; past the threshold, an
+        *automatic* collection runs, if the GC is enabled. This is ordinary application
+        garbage, the thing that triggers collections in real workers.
+
+    Args:
+        n: how many cycles to create.
+        hold_ms: stay busy this long afterwards (see _hold).
+
+    Returns:
+        gc.get_count() before and after, and the pid.
+    """
+    before = gc.get_count()
+    for i in range(n):
+        cycle: list[object] = []
+        cycle.append(cycle)  # WHY: a list containing itself: only the cycle collector frees it
+        scratch = {"i": i, "cycle": cycle}
+        del cycle, scratch
+    after = gc.get_count()
+    _hold(hold_ms)
+    return {"count_before": list(before), "count_after": list(after), "pid": os.getpid()}
+
+
+def gc_collect(generation: int = 2, hold_ms: float = 0) -> dict[str, object]:
+    """Run an explicit collection of `generation` (0–2).
+
+    Why:
+        A key K3 lesson: an explicit gc.collect() runs even while gc.disable() or
+        set_threshold(0) is in effect; those only stop *automatic* collections (gate G3.4).
+
+    Args:
+        generation: 0, 1 or 2 (2 = everything not frozen).
+        hold_ms: stay busy this long afterwards (see _hold).
+
+    Returns:
+        How many objects were collected, the duration in ms, and the pid.
+    """
+    started = time.perf_counter()
+    collected = gc.collect(generation)
+    elapsed = time.perf_counter() - started
+    _hold(hold_ms)
+    return {
+        "collected": collected,
+        "ms": round(elapsed * 1000, 3),
+        "pid": os.getpid(),
+    }
+
+
+def gc_stats(hold_ms: float = 0) -> dict[str, object]:
+    """Report this worker's GC state.
+
+    Why:
+        GC settings are invisible per-process global state; this makes them observable, so
+        tests and the K3 lab can check each gc_mode really took effect (AC-3.2).
+
+    Args:
+        hold_ms: stay busy this long afterwards (see _hold).
+
+    Returns:
+        enabled, threshold, count, per-generation stats, frozen count and pid.
+    """
+    _hold(hold_ms)
+    return {
+        "enabled": gc.isenabled(),
+        "threshold": list(gc.get_threshold()),
+        "count": list(gc.get_count()),
+        "stats": gc.get_stats(),
+        "frozen": gc.get_freeze_count(),
+        "pid": os.getpid(),
+    }
+
+
 def register(app: App) -> None:
     """Register every labs.* task on the given app.
 
@@ -205,3 +323,7 @@ def register(app: App) -> None:
     app.task(name="labs.raise")(fail)
     app.task(name="labs.hold_gil")(hold_gil)
     app.task(name="labs.random_probe")(random_probe)
+    app.task(name="labs.touch_preloaded")(touch_preloaded)
+    app.task(name="labs.churn")(churn)
+    app.task(name="labs.gc_collect")(gc_collect)
+    app.task(name="labs.gc_stats")(gc_stats)

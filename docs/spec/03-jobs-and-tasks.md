@@ -158,10 +158,12 @@ These are registered into the app only when `labs.enabled = true`, under the `la
 | `labs.crash` | `how` ∈ `exit1`, `segv`, `abort`, `sigkill_self` | dies the way requested (`os._exit(1)`, `ctypes.string_at(0)`, `os.abort()`, `os.kill(os.getpid(), 9)`) | K1 death classification |
 | `labs.hold_gil` | `seconds`, `method` ∈ `pydll` (default), `regex` | runs C code **while holding the GIL** (`ctypes.PyDLL(None).sleep`, or a catastrophic-backtracking regex as fallback), so even the heartbeat thread can't run. This is the "hung worker" fault (K1 §5.9) | K1 heartbeat lab, K4 |
 | `labs.random_probe` | — | returns `random.getrandbits(64)`. It shows that workers don't share random state after a fork | K2 |
-| `labs.touch_preloaded` | `fraction` (0–1) | reads that fraction of the K3 preloaded object graph, which bumps refcounts | K3 |
-| `labs.churn` | `n` | creates and drops `n` small cycles and short-lived dicts, which triggers *automatic* collections when the GC is enabled. Returns `gc.get_count()` before and after | K3 |
-| `labs.gc_collect` | `generation` (0–2) | `gc.collect(generation)`. This runs even while the GC is disabled. Returns the number collected and the duration in ms | K3, K7 |
-| `labs.gc_stats` | — | `{enabled, threshold, count, stats, frozen, pid}` from the `gc` module | K3, K7 |
+| `labs.touch_preloaded` | `fraction` (0–1), `hold_ms` | reads that fraction of the K3 preloaded object graph, which bumps refcounts. Returns `{visited, pid}` | K3 |
+| `labs.churn` | `n`, `hold_ms` | creates and drops `n` small cycles and short-lived dicts, which triggers *automatic* collections when the GC is enabled. Returns `gc.get_count()` before and after | K3 |
+| `labs.gc_collect` | `generation` (0–2), `hold_ms` | `gc.collect(generation)`. This runs even while the GC is disabled. Returns the number collected and the duration in ms | K3, K7 |
+| `labs.gc_stats` | `hold_ms` | `{enabled, threshold, count, stats, frozen, pid}` from the `gc` module | K3, K7 |
+
+The four K3 tasks accept an optional `hold_ms` (default 0): after the measured work, the task sleeps that long. The dispatcher sends each job to the lowest-numbered free worker, so a burst of instant jobs all lands on worker 0; holding each worker briefly spreads a burst over every worker ([ADR-036](../decisions.md#adr-036)). Every K3 task returns its `pid`, so callers can check which worker ran it.
 | `labs.raise` | `message` | raises `RuntimeError(message)` | tests |
 | `labs.leak_*` | per K6 spec | planted leaks | K6 |
 | `labs.cycles` | `n` (number of "migrations"), `models=20`, `fields=10`, `payload_bytes=0` | runs `n` Django-like migrations, each building temporary model↔field reference cycles (K7 §5.4) | K7 |

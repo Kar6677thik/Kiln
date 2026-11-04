@@ -1,0 +1,12 @@
+import sys
+x = object()
+sys.getrefcount(x)
+y = x
+sys.getrefcount(x)
+holder = [x, x, x]
+sys.getrefcount(x)
+del y, holder
+sys.getrefcount(x)
+sys.getrefcount(None)
+sys._is_immortal(None), sys._is_immortal(x)
+sys._is_immortal(1024), sys._is_immortal(int("1025"))

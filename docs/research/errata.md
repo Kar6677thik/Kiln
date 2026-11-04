@@ -40,9 +40,9 @@
 - **Plan:** K3 verification gate:
   1. Run `import msgpack` (and an unpack call) between `gc.disable()` and `gc.isenabled()` checks, on every matrix interpreter.
   2. If msgpack no longer re-enables the GC, K3 uses `labs/k3/rogue_gc_enabler.py`, a stand-in module that calls `gc.enable()` on import, labelled clearly as a stand-in. Optionally it also pins an old msgpack release for historical reproduction, if one installs on 3.13+.
-- **Evidence:** pending (K3).
+- **Evidence (K3 gate G3.1, 2026-11-04):** msgpack **1.2.4** (the current release, installed by the `lab-k3` group) does **not** re-enable the GC, neither at import nor during `unpackb`, on 3.13.17, 3.14.9, 3.15.1 and 3.15.1t (`./scripts/dev.sh lab k3-msgpack`, record in `results/published/K3/msgpack-gate/`). K3 therefore uses the labelled stand-in `labs/k3/rogue_gc_enabler.py` (modes `python`, `capi`, `runtime`). No old msgpack release was pinned.
 - **Affects:** K3.
-- **Status:** 🔍 to verify
+- **Status:** ✅ corrected
 
 ## E-04: GIL re-enabling: use our own C extension, not a third-party package
 - **Research claim:** §2.9 and K4, "detect which extension re-enables the GIL", which implies finding a real third-party package that does it.
@@ -177,3 +177,24 @@
 - **Evidence:** `corpus/real/*/PROVENANCE.md`.
 - **Affects:** K2 (corpus fidelity; the lab report's limitations section).
 - **Status:** ℹ️ clarification
+
+## E-21: tracemalloc's own bookkeeping can dwarf what it measures
+- **Spec claim:** K3 §5.3 builds the preload graph "until `tracemalloc.get_traced_memory()[0]` (tracing started just for the build, then stopped) reaches `mb` MiB".
+- **Correction:** tracemalloc keeps an entry for every live allocation it traces. Tracing the whole 300 MiB build (about 6 million objects) made the process grow by **817 MiB**, and that memory stayed in the process after `tracemalloc.stop()`. The master would have carried about 500 MiB that isn't the graph, distorting every sharing number. Kiln traces only the first 5,000 records, computes bytes per record and builds the rest untraced (ADR-036). The record count matched a fully traced build to within 0.4%, and growth fell to 347 MiB.
+- **Evidence:** `labs/k3/preload_graph.py --mb 300` before and after the change (3.15.1): `rss_growth_mib` 817.0 → 347.0.
+- **Affects:** K3 (and K6, which uses tracemalloc deeply: its primer must mention the overhead).
+- **Status:** ✅ corrected
+
+## E-22: Which strings are immortal depends on the version and on how they were made
+- **Spec claim:** K3 §5.3's "immortal-heavy" composition uses "`sys.intern`'d short words" as immortal leaves, and the K3 spec lists small ints as −5..256.
+- **Correction (gate G3.6):** on the GIL builds 3.13–3.15, a string interned at runtime with `sys.intern()` is **mortal**, and so is a string literal of a module compiled from source; the *same* literal loaded from a `.pyc` is immortal. On 3.15t every interned string is immortal, and constants in compiled code (a `1.5` literal, tuples) are too. The small-int cache is −5…256 on 3.14 but **−5…1024 on 3.15**. Kiln's immortal-heavy words are string literals in `kiln/labs/preload.py` (normally loaded from its `.pyc`), not `sys.intern` results.
+- **Evidence:** `docs/concepts/snippets/immortal-objects_1.py` and `_2.py`, [concepts/immortal-objects.md](../concepts/immortal-objects.md).
+- **Affects:** K3 lab (b).
+- **Status:** ✅ corrected
+
+## E-23: `__del__` during module teardown is not a reliable "finalization ran" probe
+- **Spec claim:** K3 step 3.5's test checks the exit trick with "an object's `__del__` that prints at module teardown".
+- **Correction:** Python doesn't promise `__del__` for objects still alive at interpreter exit. A module-level object stayed alive past teardown whenever the app's module dict was part of a reference cycle (the app's task functions point back at the module globals), which depended on unrelated settings (`--labs`, DEBUG logging). The test passed once, by luck, then failed every time. Kiln's probe is instead an unreachable reference cycle created *in an atexit handler*: afterwards only the interpreter's final collection can free it, and `os._exit` skips that collection.
+- **Evidence:** `tests/integration/test_exit_trick.py`; a `PYTHONVERBOSE=1` run showed `# destroy exit_app` with no `__del__` call.
+- **Affects:** K3.
+- **Status:** ✅ corrected

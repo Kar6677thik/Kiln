@@ -1,0 +1,7 @@
+import pylib (GC disabled before):
+  A shim: gc.enable() called from pylib.py:2
+  B import hook: importing 'pylib' turned the GC on
+  C poll: gc.isenabled() is now True
+import clib (GC disabled before):
+  B import hook: importing 'clib' turned the GC on
+  C poll: gc.isenabled() is now True

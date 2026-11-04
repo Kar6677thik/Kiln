@@ -1,0 +1,17 @@
+import traceback
+def inner():
+    return traceback.extract_stack()
+
+def outer():
+    return inner()
+
+frames = outer()
+[(f.name, f.lineno) for f in frames[-3:]]
+frames[-1].name, frames[-2].name
+print("".join(traceback.format_list(frames[-2:])), end="")
+try:
+    1 / 0
+except ZeroDivisionError:
+    text = traceback.format_exc()
+
+text.splitlines()[-1]

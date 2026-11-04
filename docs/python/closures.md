@@ -1,7 +1,7 @@
 # Closures (functions inside functions)
 
 > **First used in:** see the [ledger](README.md) (milestone K2) · **Needs:** [functions](functions.md), [decorators](decorators.md) · **Reading time:** ~7 min
-> **Terms introduced:** **nested function**, **closure**, **`nonlocal`**, **`__qualname__`**, **late binding**
+> **Terms introduced:** **nested function**, **closure**, **`nonlocal`**, **`global`**, **`__qualname__`**, **late binding**
 
 ## What it looks like
 
@@ -20,6 +20,16 @@ def make_counter():
 - A **nested function** is a `def` inside another function. It's created *each time* the outer function runs.
 - If the inner function uses a variable of the outer function, Python keeps that variable alive for it, even after the outer function has returned. The function plus its remembered variables is a **closure**.
 - **`nonlocal count`** lets the inner function *assign* to the outer variable. Without it, `count += 1` would try to create a new local variable and fail.
+- **`global name`** is the module-level cousin of `nonlocal`: it lets a function *assign* to a module variable. K3 uses it twice, in `kiln/labs/preload.py` (`ensure_graph` sets the module's `GRAPH`, which forked workers then share) and in `kiln/memory/gcmodes.py` (`ACTIVE_WATCH`). Reading a module variable never needs `global`; only rebinding it does.
+
+  ```python
+  GRAPH = None
+
+  def ensure_graph():
+      global GRAPH        # without this line, GRAPH = ... would create a local variable
+      if GRAPH is None:
+          GRAPH = build()
+  ```
 - A nested function's **`__qualname__`** (qualified name) records where it lives: `make_counter.<locals>.increment`. The `<locals>` part means "a local variable of a call to `make_counter`".
 
 ## Why people use it

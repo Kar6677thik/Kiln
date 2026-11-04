@@ -36,6 +36,7 @@ from kiln.launch.base import ChildExit, Launched, LauncherEvent, Spawned, Worker
 from kiln.launch.forkserver import ForkserverError
 from kiln.master.connections import Connection
 from kiln.master.workers import WorkerHandle, WorkerState
+from kiln.memory.procfs import ProcessGone, read_smaps_rollup
 from kiln.protocol.messages import MsgType, Shutdown, message
 
 if TYPE_CHECKING:
@@ -976,28 +977,57 @@ class Supervisor:
                 self.kill(handle, signal.SIGKILL, "heartbeat_timeout")
 
     def check_rss(self) -> None:
-        """Retire READY workers whose last reported RSS is over max_rss_mb (spec/04 §5.5).
+        """Retire READY workers whose memory is over max_rss_mb (spec/04 §5.5).
 
         Why:
-            A worker stuck in one long job can't check its own RSS, so the master checks the
-            heartbeat values too.
+            A worker stuck in one long job can't check its own memory, so the master checks
+            too. RSS comes from the heartbeats; PSS/USS (K3) need /proc/<pid>/smaps_rollup,
+            which the kernel builds by walking every mapping, so the arbiter calls this only
+            every RSS_CHECK_EVERY ticks (5 s), keeping the loop from blocking (ADR-006).
         """
         limit = self.arb.config.worker.max_rss_mb
         if limit <= 0:
             return
+        metric = self.arb.config.worker.memory_metric
         for handle in self.arb.workers.all():
-            if handle.state is WorkerState.READY and (handle.rss_bytes or 0) > limit * 2**20:
+            if handle.state is not WorkerState.READY:
+                continue
+            value = self._memory_of(handle, metric)
+            if value is not None and value > limit * 2**20:
                 logsetup.event(
                     log,
                     logging.WARNING,
                     "worker_over_memory",
                     worker_id=handle.worker_id,
-                    metric="rss",
-                    value_mb=round((handle.rss_bytes or 0) / 2**20, 1),
+                    metric=metric,
+                    value_mb=round(value / 2**20, 1),
                     limit_mb=limit,
                     detected_by="master",
                 )
                 self.retire(handle, "max_rss")
+
+    def _memory_of(self, handle: WorkerHandle, metric: str) -> int | None:
+        """A worker's memory in bytes by the configured metric, or None if unknown.
+
+        Why:
+            RSS over-counts pages shared with the master; PSS charges a fair share and USS
+            only the worker's own pages (docs/concepts/memory-metrics.md), so under fork
+            they recycle on what the worker really costs.
+
+        Args:
+            handle: the worker.
+            metric: "rss", "pss" or "uss".
+
+        Returns:
+            The value, or None.
+        """
+        if metric == "rss":
+            return handle.rss_bytes
+        try:
+            rollup = read_smaps_rollup(handle.pid)
+        except (ProcessGone, PermissionError):
+            return None
+        return rollup.pss if metric == "pss" else rollup.uss
 
     # --- reload, scale, shutdown -------------------------------------------------------------
 

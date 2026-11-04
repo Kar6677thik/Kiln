@@ -1,11 +1,11 @@
-# Memory Metrics: Virtual Size, RSS and the High-Water Mark
+# Memory Metrics: Virtual Size, RSS, PSS, USS and the High-Water Mark
 
-> **Milestone:** K1 (K3 adds PSS and USS) · **Read before:** [what-is-a-process](what-is-a-process.md) · **Reading time:** ~12 min
-> **Terms introduced:** **virtual memory**, **page**, **resident memory**, **RSS**, **VmSize**, **VmHWM**, **page fault**
+> **Milestone:** K1, extended in K3 (PSS, USS, shared/private, clean/dirty, anonymous/file) · **Read before:** [what-is-a-process](what-is-a-process.md) · **Reading time:** ~18 min
+> **Terms introduced:** **virtual memory**, **page**, **resident memory**, **RSS**, **VmSize**, **VmHWM**, **page fault**, **PSS**, **USS**, **clean page**, **dirty page**, **anonymous memory**, **file-backed memory**
 
 ## One-sentence summary
 
-A process can *reserve* far more memory than it *uses*. **RSS** counts what is really sitting in RAM right now, and **VmHWM** remembers the highest RSS the process ever reached.
+A process can *reserve* far more memory than it *uses*. **RSS** counts what is really sitting in RAM right now, and **VmHWM** remembers the highest RSS the process ever reached; when processes share pages, **PSS** gives each its fair share and **USS** counts only what is its alone.
 
 ## Why you should care
 
@@ -55,11 +55,35 @@ Line by line:
 - **Why RSS over-counts:** a shared library, or a page shared after `fork()`, is resident *once* in RAM but appears in *every* sharing process's RSS. Add up the RSS of 4 workers and you can exceed the machine's real usage. K3 introduces **PSS** (shared pages divided fairly) and **USS** (only private pages), read from `/proc/<pid>/smaps_rollup`.
 - **Python and memory:** CPython requests memory in big blocks (arenas) and reuses it internally. RSS doesn't always shrink when Python objects are freed. A "leak" is RSS that grows *without bound*, not RSS that stays high once (K6).
 
+### K3: who owns a page? PSS, USS, shared and private
+
+RSS answers "how many pages can this process touch?". Once processes share pages (after `fork()`, or through shared libraries), you need to know *who pays* for each page. `/proc/<pid>/smaps_rollup` ([smaps](smaps.md)) answers with four page categories and two derived totals:
+
+| | **clean** (unchanged since it was loaded or shared) | **dirty** (modified in memory) |
+|---|---|---|
+| **shared** (more than one process maps it) | `Shared_Clean`: e.g. library code; pages a forked worker inherited and nobody has written since | `Shared_Dirty`: pages the parent wrote *before* forking, still shared |
+| **private** (only this process maps it) | `Private_Clean`: e.g. a library only this process loaded | `Private_Dirty`: the process's own heap, **including copy-on-write copies** |
+
+- **PSS** (proportional set size) = private pages + each shared page divided by the number of processes sharing it. **Σ PSS over processes = the real total.**
+- **USS** (unique set size) = `Private_Clean + Private_Dirty`: the memory you'd get back if this process exited.
+- **Anonymous vs file-backed.** **Anonymous memory** (heap, Python objects, `malloc`) has no file behind it; `Pss_Anon` is where Python objects show up. **File-backed memory** (the interpreter binary, `.so` libraries, memory-mapped files) can be re-read from disk; `Pss_File` is mostly code. The K3 analysis focuses on `Pss_Anon` and `Private_Dirty`, because shared *file* pages (the Python binary) are shared by every Python process on the machine and say nothing about copy-on-write.
+
+A real 2-process example, measured with [`snippets/smaps_1.py`](snippets/smaps_1.py) on Python 3.15.1 (a parent and a forked child sharing 40 MiB):
+
+```text
+parent Rss   52.0  Pss   24.5  USS    0.7  Shared   51.3  (MiB)
+child  Rss   45.4  Pss   22.5  USS    0.5  Shared   44.9  (MiB)
+sum of RSS =   97.4 MiB   sum of PSS =   47.0 MiB
+```
+
+Σ RSS says 97.4 MiB; the two processes really occupy Σ PSS = 47.0 MiB. When a forked worker starts *writing* to shared pages ([copy-on-write](copy-on-write.md)), its `Private_Dirty` and USS grow, its `Shared` shrinks, and Σ PSS grows by exactly the copied amount. That growth is what K3 measures.
+
 ## How Kiln uses it
 
 - [`memory/procfs.py` → `read_status`](../../src/kiln/memory/procfs.py) parses `/proc/<pid>/status` into bytes: `vm_rss`, `vm_hwm`, `rss_anon`, `rss_file`, `rss_shmem`.
 - Workers send `rss_bytes` in every heartbeat. After each job they compare RSS with `worker.max_rss_mb` and retire themselves gracefully if it's over (spec/04 §5.5). The master double-checks from the heartbeats, because a stuck worker can't check itself.
-- `kiln doctor` D14 checks `smaps_rollup` is readable, for K3.
+- `kiln doctor` D14 checks `smaps_rollup` is readable.
+- K3: [`memory/procfs.py`](../../src/kiln/memory/procfs.py) → `read_smaps_rollup` returns a `SmapsRollup` (bytes, with `uss` and `shared` properties); `worker.memory_metric = pss | uss` makes recycling use those instead of RSS; `kiln mem` prints them for the master and every worker.
 
 ## Common misconceptions
 
@@ -87,7 +111,7 @@ Line by line:
 3. Predict: two forked workers share 200 MiB of their parent's pages without modifying them. What does each one's RSS include, and what's the real RAM used?
    <details><summary>Answer</summary>
 
-   Each one's RSS includes the 200 MiB, so the sum shows 400 MiB or more. Physically the pages exist once, about 200 MiB. That's why K3 uses PSS.
+   Each one's RSS includes the 200 MiB, so the sum shows 400 MiB or more. Physically the pages exist once, about 200 MiB. Each worker's PSS includes only its share (about 100 MiB if just the two map them), so Σ PSS ≈ 200 MiB, the real number.
 
    </details>
 4. Why does Kiln check `max_rss_mb` in both the worker and the master?
@@ -97,8 +121,15 @@ Line by line:
 
    </details>
 
+5. A worker's USS grows from 1 MiB to 60 MiB while its RSS stays at 320 MiB. What happened?
+   <details><summary>Answer</summary>
+
+   About 59 MiB of pages it used to share became private: copy-on-write copied them because the worker (or its refcount updates, or the GC) wrote to them. RSS doesn't change, since the worker can touch the same number of pages as before; only who owns them changed.
+
+   </details>
+
 ## Go deeper
 
 - `man 5 proc`, sections `/proc/pid/status` and `/proc/pid/smaps`: the exact meaning of every field.
 - [spec/10 §7](../spec/10-measurement-methodology.md#7-memory-metrics-definitions): Kiln's memory metric definitions.
-- [K3 milestone](../milestones/K3-copy-on-write.md): PSS, USS and copy-on-write.
+- [K3 milestone](../milestones/K3-copy-on-write.md) and [smaps](smaps.md): every field of `smaps_rollup`.

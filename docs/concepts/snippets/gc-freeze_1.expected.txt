@@ -1,0 +1,2 @@
+without freeze   frozen= <ANY> gc copied <ANY> MiB, then reading copied <ANY> MiB more
+with freeze      frozen= <ANY> gc copied <ANY> MiB, then reading copied <ANY> MiB more

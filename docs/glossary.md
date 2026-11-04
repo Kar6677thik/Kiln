@@ -20,6 +20,7 @@
 - **Amdahl's law.** If part of a job can't run in parallel, that part caps the speedup. With 10% serial work, you can never get more than 10× faster, however many cores you add. *See:* K4.
 - **Ancillary data.** A side channel of a Unix-socket message, separate from the normal bytes. SCM_RIGHTS uses it to carry open fds. *See:* [concepts/fd-passing.md](concepts/fd-passing.md)
 - **`__annotate__` scope.** An extra, hidden function scope Python 3.14+ creates to hold lazily evaluated annotations (PEP 649). Tools must find scopes by name, not by position, because it shifts the order. *See:* [python/symtable-module.md](python/symtable-module.md)
+- **Anonymous memory / file-backed memory.** Anonymous memory has no file behind it (the heap, where Python objects live, and stacks); file-backed memory is a mapped file (the interpreter binary, `.so` libraries). `Pss_Anon` vs `Pss_File` in smaps_rollup. *See:* [concepts/smaps.md](concepts/smaps.md)
 - **App / app spec.** The user's object that holds registered tasks, and the `"module:attribute"` string that tells Kiln where to find it. *Example:* `examples.demo:app`. *See:* [spec/03 §1](spec/03-jobs-and-tasks.md#1-vocabulary-these-words-have-exact-meanings-in-kiln).
 - **Arbiter.** Another name for the **master** process (gunicorn's term). It "arbitrates", meaning it decides what every worker does.
 - **argparse.** The standard-library module that parses command-line arguments and writes `--help` text. *See:* [python/argparse.md](python/argparse.md).
@@ -34,10 +35,14 @@
 - **asyncio.run.** Starts an event loop, runs one coroutine to completion, and closes the loop. *See:* [python/asyncio-first-look.md](python/asyncio-first-look.md).
 - **At-least-once / at-most-once / exactly-once.** How many times a job's function might run. At-most-once: 0 or 1 times. At-least-once: 1 or more. Exactly-once: impossible in general. *See:* [spec/03 §5](spec/03-jobs-and-tasks.md#5-delivery-semantics-how-many-times-can-my-function-run).
 - **atexit.** A Python module that runs registered functions when the interpreter shuts down normally, in reverse order of registration. *See:* K3.
+- **Atexit handler / exit handler.** A function registered with `atexit.register` that runs when the interpreter exits normally, in LIFO order. *See:* [python/atexit.md](python/atexit.md)
+- **`atexit.register`.** Registers an exit handler. *See:* [python/atexit.md](python/atexit.md)
 - **Atomic write.** Writing a file so readers see either the old version or the complete new one, never half of it: write to a temp file, then `os.replace()` it over the target.
 - **Attempt.** One try at running a job on a worker. A retried job has several.
 - **Attribute.** A value stored on an object, read with a dot: `job.state`. *See:* [python/classes-and-objects.md](python/classes-and-objects.md).
+- **Attribute lookup at call time.** `mod.f()` finds `f` on `mod` when the call happens, so a patched `mod.f` is seen; `from mod import f` saved the old object. *See:* [python/monkeypatching.md](python/monkeypatching.md)
 - **AttributeError.** The error raised when you read an attribute an object doesn't have. *See:* [python/classes-and-objects.md](python/classes-and-objects.md).
+- **Audit hook.** A callback added with `sys.addaudithook` that CPython calls on runtime events (imports, `open`…). Rejected for gcwatch: it fires *before* an import runs. *See:* [concepts/global-interpreter-state.md](concepts/global-interpreter-state.md)
 
 ## B
 - **Backlog.** How many connected clients may wait for accept() before new ones are refused (the number given to listen()). *See:* [concepts/sockets-and-socketpairs.md](concepts/sockets-and-socketpairs.md).
@@ -70,6 +75,7 @@
 - **Channel.** In Kiln, the private socketpair connection between the master and one worker.
 - **ChildProcessError.** Raised by `os.waitpid` when the process has no children to wait for (ECHILD). *See:* [python/os-module.md](python/os-module.md).
 - **Class / instance.** A class is a blueprint (`class Dog:`); an instance is one object built from it (`rex = Dog()`). *See:* [python/classes-and-objects.md](python/classes-and-objects.md).
+- **Clean page / dirty page.** Clean: unmodified since it was loaded or shared. Dirty: modified in memory. `Private_Dirty` growing in a worker means copy-on-write copies are happening. *See:* [concepts/smaps.md](concepts/smaps.md)
 - **Client.** Any program that connects to Kiln to submit jobs or ask about them, such as the `kiln` CLI or the gateway.
 - **Closed-loop vs. open-loop load.** A closed-loop load generator waits for each reply before sending the next request. An open-loop one sends on a fixed schedule whatever happens. Only open loop shows the true latency during a stall. *See:* coordinated omission.
 - **Code coverage.** The percentage of code lines your tests executed. Kiln targets at least 85%.
@@ -94,7 +100,9 @@
 - **CPython.** The standard implementation of Python, written in C. It's what `python` usually means.
 - **Crash loop.** A process that fails right after starting, gets restarted, and fails again, over and over. *See:* [spec/04 §5.1](spec/04-supervisor.md#51-keeping-the-worker-count).
 - **CRLF / LF.** Line endings. Windows uses carriage return plus line feed (`\r\n`) and Unix uses `\n`. Shell scripts with CRLF break, so Kiln forces LF with `.gitattributes`.
+- **`ctypes` / `ctypes.CDLL` / `ctypes.PyDLL` / `ctypes.pythonapi`.** The stdlib library for calling C functions. `CDLL` calls release the GIL; `PyDLL` calls keep it; `pythonapi` is a `PyDLL` for the running interpreter's own C API (`PyGC_Enable`). *See:* [python/ctypes-basics.md](python/ctypes-basics.md)
 - **Custom exception.** Your own error type: a class that inherits from `Exception`. *See:* [python/exceptions.md](python/exceptions.md).
+- **Cycle collector.** CPython's garbage collector: it finds groups of objects that only reference each other (cycles), which reference counting can never free. *See:* [concepts/garbage-collector.md](concepts/garbage-collector.md)
 
 ## D
 - **Daemon.** A long-running background process (a server).
@@ -103,6 +111,7 @@
 - **Dataclass.** A class whose `__init__`, `__repr__` and `__eq__` are written for you from its annotated fields (`@dataclass`). *See:* [python/dataclasses.md](python/dataclasses.md).
 - **Deadline.** A point in (monotonic) time by which something must happen, such as "the worker must be ready by t=30 s".
 - **Deadlock.** Waiting forever for something that can never happen, such as a lock that no thread will ever release. *See:* [concepts/fork-and-threads.md](concepts/fork-and-threads.md).
+- **Deallocation.** Freeing an object, which CPython does the moment its reference count reaches 0. *See:* [concepts/refcounting.md](concepts/refcounting.md)
 - **Debug op.** An opt-in diagnostic request (tracemalloc snapshot, GC stats, stack dump…) that the master forwards to a worker. *See:* [spec/06 §5](spec/06-observability.md).
 - **Decoder buffer.** Bytes received but not yet turned into complete messages, kept until the rest arrives. *See:* [concepts/framing.md](concepts/framing.md).
 - **Decorator.** A function that wraps or registers another function, written with `@name` above a `def`. *Example:* `@app.task`. *See:* `python/decorators.md` (K0).
@@ -113,6 +122,7 @@
 - **Delivery semantics.** How many times a job's function may run when things crash: at most once, at least once, or (with the task's help) exactly once. *See:* [concepts/delivery-semantics.md](concepts/delivery-semantics.md).
 - **Dependency group (PEP 735).** A named set of extra dependencies in `pyproject.toml`, such as `dev` or `lab-k6`, that is installed only when you ask for it.
 - **deque.** A double-ended queue (`collections.deque`): fast to add or remove at both ends. Kiln's job queue is one. *See:* [python/collections-deque.md](python/collections-deque.md).
+- **Detection layer.** One of gcwatch's mechanisms: A the shim, B the import flip, C the poll and collection sentinel, D gdb by hand. *See:* [concepts/global-interpreter-state.md](concepts/global-interpreter-state.md)
 - **dict.** A key → value lookup table: `{"workers": 4}`. *See:* [python/variables-and-types.md](python/variables-and-types.md).
 - **__dict__.** The hidden dictionary that normally holds an object's attributes; `__slots__` removes it. *See:* [python/slots-and-frozen-dataclasses.md](python/slots-and-frozen-dataclasses.md).
 - **Diff.** A line-by-line description of a change: lines starting with `-` were removed, `+` were added. *See:* [concepts/git-basics.md](concepts/git-basics.md).
@@ -170,6 +180,7 @@
 - **Frame (protocol).** One complete message on the wire: a 4-byte length plus the JSON payload. *See:* [spec/02](spec/02-protocol.md).
 - **Free variable.** A name a function reads from an *enclosing* function, not from its own scope or the module. It's what makes a function a closure. *See:* [concepts/ast-and-symtable.md](concepts/ast-and-symtable.md)
 - **Free-threading (3.13t / 3.15t).** A CPython build without the GIL, so threads can run Python code truly in parallel. *See:* K4.
+- **Freeze recipe.** From the `gc` docs: `gc.disable()` early in the parent, `gc.freeze()` right before `fork()`, `gc.enable()` early in the child. Kiln's `worker.gc_mode = freeze`. *See:* [concepts/gc-freeze.md](concepts/gc-freeze.md)
 - **Frozen dataclass.** A dataclass made read-only with `frozen=True`; assigning to a field raises an error. *See:* [python/dataclasses.md](python/dataclasses.md).
 - **FrozenInstanceError.** Raised when you assign to a field of a frozen dataclass. *See:* [python/slots-and-frozen-dataclasses.md](python/slots-and-frozen-dataclasses.md).
 - **Function.** A named, reusable block of code defined with `def`. *See:* [python/functions.md](python/functions.md).
@@ -180,7 +191,9 @@
 - **Garbage collector (GC).** The part of CPython that finds and frees groups of objects that refer to each other (**reference cycles**) but are no longer used. Plain refcounting can't free those. *See:* K3, K7.
 - **Gated module.** A Kiln module that needs a newer Python (3.14+ or 3.15+) and is only imported behind a version check.
 - **Gateway.** Kiln's optional HTTP front-door process (K5).
+- **`gc.collect` / `gc.set_threshold` / `gc.callbacks` / `gc.get_stats`.** Run a collection now / set the automatic-collection triggers (0 = never) / hooks called when a collection starts and stops / per-generation statistics. *See:* [python/gc-module.md](python/gc-module.md)
 - **`gc.freeze()`.** Moves every currently tracked object into a "permanent generation" that the GC never scans again. Instagram's fix. *See:* K3.
+- **`gc_refs`.** The per-object scratch counter the collector writes into each scanned object's GC header during a collection: the "copy-on-read" write that breaks sharing. *See:* [concepts/garbage-collector.md](concepts/garbage-collector.md)
 - **Generation (worker).** A counter that increases on every reload. Workers from the old generation retire.
 - **Generational hypothesis.** The observation that most objects die young. The generational GC exploits it by scanning new objects more often than old ones. *See:* K7.
 - **Generator expression.** A comprehension in `(...)` that produces values one at a time, on demand, and can only be used once. *See:* [python/comprehensions.md](python/comprehensions.md).
@@ -190,6 +203,8 @@
 - **GIL (Global Interpreter Lock).** A lock in standard CPython that lets only one thread run Python bytecode at a time. *See:* K4.
 - **git.** The version-control tool that records snapshots (commits) of a project's files over time. *See:* [concepts/git-basics.md](concepts/git-basics.md).
 - **@given.** Hypothesis's decorator that runs a test many times with generated inputs. *See:* [python/hypothesis-basics.md](python/hypothesis-basics.md).
+- **`global`.** A statement that lets a function *assign* to a module-level variable (`global GRAPH`). Reading one never needs it. *See:* [python/closures.md](python/closures.md).
+- **Global interpreter state.** Process-wide settings any library can change without telling anyone: the GC switch, signal handlers, `sys.setrecursionlimit`, the locale… *See:* [concepts/global-interpreter-state.md](concepts/global-interpreter-state.md)
 - **Graceful (shutdown / reload).** Stopping or replacing workers *after* they finish their current jobs, instead of killing them mid-job.
 
 ## H
@@ -205,12 +220,15 @@
 - **Idempotency key.** A unique id (such as the job id) a task stores with its side effect, so a repeated run can notice "already done" and skip it. *See:* [concepts/delivery-semantics.md](concepts/delivery-semantics.md).
 - **Idempotent.** Running it twice has the same effect as running it once. Required for safe retries.
 - **Identity (is) / equality (==).** `a is b` asks "the same object?"; `a == b` asks "equal values?". *See:* [python/variables-and-types.md](python/variables-and-types.md).
+- **Immortal object.** An object whose reference count never changes (PEP 683): None, True/False, small ints, many string literals. Reading it never writes its page. *See:* [concepts/immortal-objects.md](concepts/immortal-objects.md)
 - **Immortal objects (PEP 683).** Objects whose reference count never changes (for example `None`), so touching them never writes to their memory.
 - **import.** The statement that loads a module and gives you a name to use it: `import json`. *See:* [python/modules-and-imports.md](python/modules-and-imports.md).
 - **Import boundary.** A rule about which Kiln packages may import which (for example, `master` never imports `worker`), enforced by a test. *See:* [spec/01 §5](spec/01-architecture.md).
+- **Import hook / meta path finder.** Code that runs around imports, installed in `sys.meta_path`. A meta path finder is any object with a `find_spec` method. *See:* [python/import-hooks-meta-path.md](python/import-hooks-meta-path.md)
 - **Import-time side effect.** Work a module does merely by being imported: opening files, starting threads, connecting to a database. Under fork it happens once in the parent; under spawn it happens again in every child. *See:* [concepts/import-system.md](concepts/import-system.md)
 - **importlib.import_module.** Imports a module whose name is in a string; `load_app` uses it for "examples.demo:app". *See:* [python/importlib.md](python/importlib.md).
 - **In-flight.** Sent to a worker but not finished yet.
+- **Incref / decref.** Incrementing or decrementing an object's reference count. It happens on almost every use of an object, which is why *reading* a Python object writes to its memory page. *See:* [concepts/refcounting.md](concepts/refcounting.md)
 - **Incremental GC.** A collector that does its work in small slices to keep pauses short. Python 3.14.0–3.14.4 shipped one, and it was reverted because of peak memory blowups. *See:* K7.
 - **Index.** The position number of an item in a sequence, starting at 0: `argv[0]` is the first item. *See:* [python/slicing.md](python/slicing.md).
 - **IndexError.** The error raised when you ask for an index that doesn't exist, such as `[1, 2][5]`. *See:* [python/slicing.md](python/slicing.md).
@@ -224,7 +242,9 @@
 - **inspect.signature.** Describes a function's parameters; `.bind()` checks whether a call's arguments would fit. *See:* [python/inspect.md](python/inspect.md).
 - **int / float.** Whole numbers (`42`) and approximate numbers with a fractional part (`0.1`). *See:* [python/variables-and-types.md](python/variables-and-types.md).
 - **Interleaving (round-robin).** Running experiment variants alternately (A B C A B C…) so slow drift affects all of them equally.
+- **Interning.** Keeping one shared copy of equal strings (`sys.intern`). Whether an interned string is immortal depends on the version and on how it was created. *See:* [concepts/immortal-objects.md](concepts/immortal-objects.md)
 - **Interpreter.** The program that reads and runs Python code (`python3.15`). *See:* [python/running-python-and-the-repl.md](python/running-python-and-the-repl.md).
+- **Interpreter finalization / final collection / module teardown.** What happens after the atexit handlers on a normal exit: stdio is flushed, a last garbage collection runs, and module globals are freed. `os._exit` skips all of it. *See:* [concepts/finalization-and-atexit.md](concepts/finalization-and-atexit.md)
 - **Introspection.** Code examining code while it runs: its type, attributes, parameters. *See:* [python/inspect.md](python/inspect.md).
 - **Invariant.** A statement that must always be true, such as "a terminal job never changes state".
 - **IPC (inter-process communication).** Any way separate processes exchange data: pipes, sockets, shared memory, signals.
@@ -253,6 +273,7 @@
 - **Lazy evaluation.** Computing a value only when it is actually needed. *See:* [python/comprehensions.md](python/comprehensions.md).
 - **Lazy import (PEP 810, 3.15).** `lazy import x` delays actually importing `x` until it's first used.
 - **Length prefix.** A fixed-size number sent before each message saying how many bytes it has. KP/1 uses 4 big-endian bytes. *See:* [concepts/framing.md](concepts/framing.md).
+- **LIFO order.** Last in, first out: the handler registered last runs first. Registering Kiln's exit trick *first* makes it run *last*. *See:* [python/atexit.md](python/atexit.md)
 - **Line endings.** The invisible characters ending each line of text: LF (`\n`) on Linux, CRLF (`\r\n`) on Windows. *See:* [concepts/git-basics.md](concepts/git-basics.md).
 - **List / dict / set comprehension.** Comprehensions written in `[...]`, `{k: v ...}` or `{...}`, building a list, dict or set. *See:* [python/comprehensions.md](python/comprehensions.md).
 - **list / tuple.** Ordered collections: a list can be changed (`[1, 2]`), a tuple cannot (`(1, 2)`). *See:* [python/variables-and-types.md](python/variables-and-types.md).
@@ -275,15 +296,19 @@
 - **Marker (pytest).** A label on a test (`@pytest.mark.slow`) used to select, skip or configure tests. *See:* [python/pytest-basics.md](python/pytest-basics.md).
 - **Master.** Kiln's boss process. It owns the queue and supervises workers.
 - **Median / percentile.** The median is the middle value of sorted measurements, which isn't thrown off by outliers. The p-th percentile is the value that p% of measurements are below.
+- **Memory hole.** A freed slot inside a page that still holds live objects. If the parent collects garbage before forking, children fill those holes with new objects and dirty the shared page. *See:* [concepts/gc-freeze.md](concepts/gc-freeze.md)
 - **Memory isolation.** Each process has its own private memory; one process can't read or change another's by accident. *See:* [concepts/what-is-a-process.md](concepts/what-is-a-process.md).
 - **memory.max / memory.events.** cgroup v2 files. `memory.max` sets the group's memory limit. `memory.events` counts what happened, including `oom_kill`. *See:* [spec/04 §4.2](spec/04-supervisor.md).
 - **memoryview.** A zero-copy window onto existing bytes; slicing it doesn't duplicate data. *See:* [python/bytearray-and-memoryview.md](python/bytearray-and-memoryview.md).
 - **Merge.** Combining the commits of one branch into another. *See:* [concepts/git-basics.md](concepts/git-basics.md).
 - **Method.** A function defined inside a class, called on an instance: `path.read_text()`. *See:* [python/classes-and-objects.md](python/classes-and-objects.md).
 - **Min-heap / heap.** A list kept in a special order so that the smallest item is always at index 0. `heapq` maintains it; Kiln uses one for deadlines. *See:* [python/heapq.md](python/heapq.md).
+- **Minor fault.** A page fault the kernel handles without touching the disk: mapping a zero page, or copying a shared page on write (copy-on-write). *See:* [concepts/virtual-memory-and-pages.md](concepts/virtual-memory-and-pages.md)
 - **Module.** A `.py` file whose code other code can import. *See:* [python/running-python-and-the-repl.md](python/running-python-and-the-repl.md).
 - **Module cache (`sys.modules`).** The dict of modules a process has already imported. A second `import x` finds it there, so a module's top-level code runs only once per process. *See:* [concepts/import-system.md](concepts/import-system.md)
+- **Module spec / `exec_module`.** A module spec records a module's name, origin and loader; the loader's `exec_module` runs the module's code. gcwatch wraps `exec_module`. *See:* [python/import-hooks-meta-path.md](python/import-hooks-meta-path.md)
 - **ModuleNotFoundError.** The error raised when an imported name can't be found on `sys.path`. *See:* [python/modules-and-imports.md](python/modules-and-imports.md).
+- **Monkeypatching.** Replacing a module's or class's attribute at runtime. It works for everyone who looks the attribute up *later*, not for code that saved the old one. *See:* [python/monkeypatching.md](python/monkeypatching.md)
 - **Monotonic clock.** A clock that only moves forward (`time.monotonic()`), used for measuring durations and deadlines.
 - **Mount.** Attaching a filesystem at a folder. In WSL, your Windows C: drive is mounted at `/mnt/c`. *See:* [concepts/terminal-and-wsl.md](concepts/terminal-and-wsl.md).
 - **__mp_main__.** The module name `multiprocessing` gives your main script when it re-imports it in a spawned child. That's why code under `if __name__ == "__main__":` doesn't run again there. *See:* [concepts/main-module.md](concepts/main-module.md).
@@ -316,6 +341,7 @@
 - **Package.** A folder of modules with an `__init__.py`; `kiln` is a package. *See:* [python/modules-and-imports.md](python/modules-and-imports.md).
 - **Page.** The unit of memory the kernel manages: 4 KiB on x86-64. *See:* [concepts/memory-metrics.md](concepts/memory-metrics.md).
 - **Page fault.** The CPU's trap when a program touches memory with no RAM page behind it yet (or a shared page it must copy); the kernel then supplies one. *See:* [concepts/memory-metrics.md](concepts/memory-metrics.md).
+- **Page table.** The per-process map from virtual pages to physical page frames. `fork` copies the page table, not the pages. *See:* [concepts/virtual-memory-and-pages.md](concepts/virtual-memory-and-pages.md)
 - **Parameter / argument.** A parameter is the name in the `def`; an argument is the value passed in a call. *See:* [python/functions.md](python/functions.md).
 - **parametrize.** `@pytest.mark.parametrize` runs one test function once per row of a table of inputs. *See:* [python/pytest-basics.md](python/pytest-basics.md).
 - **Parent process / child process.** The process that started another one is its parent; the started one is its child. Kiln's master is the parent of its workers. *See:* [concepts/what-is-a-process.md](concepts/what-is-a-process.md).
@@ -417,7 +443,9 @@
 - **Serialize / deserialize.** Turn values into text or bytes for storage or sending, and back again. *See:* [python/json.md](python/json.md).
 - **Server.** A long-running process that waits for requests and answers them. *See:* [concepts/what-is-a-server.md](concepts/what-is-a-server.md).
 - **set.** An unordered collection with no duplicates: `{1, 2, 3}`. *See:* [python/variables-and-types.md](python/variables-and-types.md).
+- **Shared page / private page.** A page mapped by more than one process vs. by only this one. After `fork` everything starts shared; each write makes a private copy. *See:* [concepts/copy-on-write.md](concepts/copy-on-write.md)
 - **Shell.** The program inside the terminal that reads your commands and runs them, such as bash or zsh. *See:* [concepts/terminal-and-wsl.md](concepts/terminal-and-wsl.md).
+- **Shim.** A wrapper put in place of a function so its calls can be observed; gcwatch's layer A replaces `gc.enable` with one. *See:* [python/monkeypatching.md](python/monkeypatching.md)
 - **Shrinking.** Hypothesis simplifying a failing input step by step to the smallest one that still fails. *See:* [python/hypothesis-basics.md](python/hypothesis-basics.md).
 - **Side effect.** A change a function makes outside itself: an email sent, a row written, a file deleted. *See:* [concepts/delivery-semantics.md](concepts/delivery-semantics.md).
 - **SIG_IGN / SIG_DFL.** The special handlers meaning "ignore this signal" and "use the default action". Workers set SIGINT to SIG_IGN (ADR-024). *See:* [python/signal-module.md](python/signal-module.md).
@@ -428,6 +456,8 @@
 - **Signals enum.** `signal.Signals`: named signal numbers, so `Signals(9).name` is "SIGKILL". *See:* [python/signal-module.md](python/signal-module.md).
 - **Slicing.** Taking part of a sequence with `[start:stop]`: `argv[1:]` is everything after the first item. *See:* [python/slicing.md](python/slicing.md).
 - **slots / __slots__.** A fixed attribute layout for a class, with no per-object `__dict__`: smaller objects, and typos raise errors. `@dataclass(slots=True)` sets it up. *See:* [python/slots-and-frozen-dataclasses.md](python/slots-and-frozen-dataclasses.md).
+- **Small int cache.** Preallocated, immortal int objects: −5…256 on 3.13 and 3.14, −5…1024 on 3.15 (measured, gate G3.6). *See:* [concepts/immortal-objects.md](concepts/immortal-objects.md)
+- **smaps_rollup.** `/proc/<pid>/smaps_rollup`: the kernel's summed memory accounting over all of a process's mappings (Rss, Pss, Shared/Private, Clean/Dirty, Swap). Read by `kiln mem`. *See:* [concepts/smaps.md](concepts/smaps.md)
 - **Snippet test.** A test that runs every code snippet in the primers so the docs can't go stale.
 - **SO_REUSEADDR.** A socket option that lets a restarted server bind its port again right away. *See:* [python/socket-module.md](python/socket-module.md).
 - **Socket.** An endpoint for sending and receiving bytes, over a network (TCP) or locally (Unix domain sockets).
@@ -457,6 +487,8 @@
 - **Swap.** Disk space the kernel uses as overflow memory. With swap, a memory-hungry process slows down instead of being killed, which is why the OOM lab sets `MemorySwapMax=0`. *See:* [concepts/cgroups-and-oom-killer.md](concepts/cgroups-and-oom-killer.md).
 - **Symbol table / SymbolTable / Symbol.** The compiler's record of every name in every scope and whether it is local, global or free. Python's `symtable` module exposes it: one `SymbolTable` per scope, one `Symbol` per name. *See:* [python/symtable-module.md](python/symtable-module.md)
 - **`symtable.symtable`.** Builds the symbol table for a piece of source code without running it. *See:* [python/symtable-module.md](python/symtable-module.md)
+- **`sys.getrefcount` / `sys._is_immortal`.** An object's reference count (plus 1 for the argument itself) / whether it is immortal (3.14+). *See:* [python/sys-getrefcount.md](python/sys-getrefcount.md)
+- **`sys.meta_path`.** The list of finders every import consults, in order. *See:* [python/import-hooks-meta-path.md](python/import-hooks-meta-path.md)
 - **sys.modules.** Python's cache of modules already imported; a second import reuses the entry. *See:* [python/modules-and-imports.md](python/modules-and-imports.md).
 - **sys.path.** The list of folders Python searches when you import something. *See:* [python/modules-and-imports.md](python/modules-and-imports.md).
 - **Syscall (system call).** A request from a program to the operating system kernel, such as `fork`, `read`, `waitpid` or `kill`.
@@ -476,6 +508,7 @@
 - **Test collection.** pytest's automatic search for test files and test functions. *See:* [python/pytest-basics.md](python/pytest-basics.md).
 - **Test pyramid.** Many fast unit tests, fewer integration tests, and only a few slow end-to-end tests. *See:* [spec/09](spec/09-testing-strategy.md).
 - **Thread.** A separate line of execution inside a process, sharing the process's memory. A worker's heartbeat runs on its own thread. *See:* [python/threading-basics.md](python/threading-basics.md).
+- **Threshold / automatic collection.** The GC runs *automatically* when allocations minus deallocations exceed `threshold0` (2000 on Kiln's versions). `gc.set_threshold(0)` turns automatic collections off; an explicit `gc.collect()` still runs. *See:* [concepts/garbage-collector.md](concepts/garbage-collector.md)
 - **Throughput.** How many jobs per second the system completes.
 - **Timer.** An action scheduled for a deadline, such as "kill this job's worker if it's still running at t=31.5". *See:* [concepts/event-loops.md](concepts/event-loops.md).
 - **tmp_path.** A pytest fixture that gives each test its own fresh, empty temporary folder. *See:* [python/pytest-basics.md](python/pytest-basics.md).
@@ -484,6 +517,9 @@
 - **TOMLDecodeError.** The error `tomllib` raises for invalid TOML. *See:* [python/tomllib.md](python/tomllib.md).
 - **tomllib.** The stdlib module that reads TOML files (read-only). *See:* [python/tomllib.md](python/tomllib.md).
 - **Traceback.** The report Python prints for an uncaught exception: the chain of calls that led there. Read it from the bottom. *See:* [python/exceptions.md](python/exceptions.md).
+- **`traceback.extract_stack` / `traceback.format_list` / `FrameSummary`.** The current call stack as a list of FrameSummary objects (filename, line number, function, source line) / those frames as traceback text. *See:* [python/traceback-module.md](python/traceback-module.md)
+- **`tracemalloc` / `tracemalloc.get_traced_memory`.** The stdlib allocation tracer / its (current, peak) traced bytes. It keeps an entry per live allocation, which is why Kiln traces only a sample of the preload graph (ADR-036). *See:* [python/tracemalloc-basics.md](python/tracemalloc-basics.md)
+- **Tracked object.** A container object (list, dict, class instance…) the cycle collector knows about; it has a GC header the collector writes into. *See:* [concepts/garbage-collector.md](concepts/garbage-collector.md)
 - **Transition / transition table.** A move from one state to another; the table lists every allowed (from, to) pair. Kiln's is `_ALLOWED` in jobs.py. *See:* [concepts/state-machines.md](concepts/state-machines.md).
 - **try / except / else / finally.** Catch exceptions (`except`), run code only on success (`else`), and always clean up (`finally`). *See:* [python/exceptions.md](python/exceptions.md).
 - **TTL (time to live).** How long something is kept before it's deleted automatically.
@@ -505,6 +541,7 @@
 - **ValueError.** The error for "right type, wrong value", such as `int("abc")`. *See:* [python/exceptions.md](python/exceptions.md).
 - **Variable (name).** A label pointing at an object. `y = x` makes a second label for the same object; it doesn't copy it. *See:* [python/variables-and-types.md](python/variables-and-types.md).
 - **Verification gate.** A step where we check a version-specific claim against the real interpreter before relying on it ([ADR-020](decisions.md#adr-020)).
+- **Virtual address / physical memory.** Every address a process uses is *virtual*: a number in its own private map. The CPU's MMU translates it to a location in *physical memory* (the real RAM), one page at a time. *See:* [concepts/virtual-memory-and-pages.md](concepts/virtual-memory-and-pages.md)
 - **Virtual environment (venv).** A folder with its own Python interpreter link and installed packages, isolated from the rest of the system.
 - **Virtual memory.** The address space a process may use. Much of it is only reserved and has no RAM behind it until touched. *See:* [concepts/memory-metrics.md](concepts/memory-metrics.md).
 - **VmHWM / ru_maxrss.** Peak resident memory of a process. VmHWM is in `/proc/<pid>/status`. `ru_maxrss` comes from `resource.getrusage`, and it is in **KiB** on Linux. *See:* K7.

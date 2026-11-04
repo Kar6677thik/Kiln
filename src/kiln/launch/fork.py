@@ -28,6 +28,7 @@ import threading
 
 from kiln import logsetup
 from kiln.launch.base import Launched, LauncherEvent, Pending, WorkerLaunchSpec
+from kiln.memory import gcmodes
 from kiln.worker.main import finalize_and_exit, run_worker
 
 
@@ -69,6 +70,9 @@ def fork_child(spec: WorkerLaunchSpec) -> int:
     sys.stdout.flush()
     sys.stderr.flush()
     logsetup.flush_all()
+    # CONCEPT(gc-freeze): with gc_mode=freeze, everything that exists now goes into the GC's
+    # permanent generation, so the child's collections never scan (and never write to) it.
+    gcmodes.before_fork(spec.config.worker.gc_mode)
     # CONCEPT(fork): after this line there are TWO processes running this same code.
     # The parent gets the child's pid; the child gets 0.
     # SYSCALL: os.fork → fork(2) (clone(2) on Linux); see 'man 2 fork'.

@@ -1,0 +1,2 @@
+first run (compiled from source)   literal immortal: <ANY>
+second run (loaded from .pyc)      literal immortal: True

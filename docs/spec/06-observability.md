@@ -84,9 +84,12 @@ The "Fields" column lists fields *in addition to* the common ones in §1.2.
 | `signal_received` | INFO | `signal` (name), `action` (`graceful_shutdown`, `fast_shutdown`, `immediate_shutdown`, `reload`, `scale_up`, `scale_down`, `status_dump`, `reap`) | every signal processed by the loop (SIGCHLD is logged at DEBUG) |
 | `status_dump` | INFO | `queue_depth`, `workers` (compact table as string), `inflight` | SIGUSR1 |
 | `shutdown_started` | INFO | `mode` (`graceful`/`fast`/`immediate`/`give_up`), `queued_cancelled`, `inflight` | |
-| `shutdown_finished` | INFO | `mode`, `duration_ms`, `forced_kills`, `exit_code` | the last line before exit |
+| `shutdown_finished` | INFO | `mode`, `duration_ms` (since `shutdown_started`), `forced_kills`, `exit_code` | the last line before exit |
 | `boot_failure_limit_reached` | CRITICAL | `consecutive_failures`, `last_error` | crash-loop protection fires (§5.1 of 04-supervisor) |
 | `cgroup_detected` | INFO | `path`, `memory_events` (`readable`/`unavailable`), `memory_max` | startup OOM-evidence probe (§4.2 of 04-supervisor) |
+| `preload_graph_built` | INFO | `records`, `traced_mib`, `build_s` | K3: the `labs.preload_mb` graph was built (master under fork, forkserver under forkserver; spawned workers build it silently) |
+| `gc_mode_ignored` | WARNING | `reason` | K3: `gc_mode = freeze` with `start.method = spawn` (nothing is shared) |
+| `exit_trick_noop_for_workers` | INFO | `reason` | K3: `worker.exit_via_os_exit = true` under fork/forkserver: forked workers already end with `os._exit` (ADR-028) |
 
 ### 2.2 Master: workers
 
@@ -150,8 +153,8 @@ The "Fields" column lists fields *in addition to* the common ones in §1.2.
 |---|---|---|---|
 | `worker_booting` | INFO | `gen`, `start_method`, `executor`, `python`, `free_threaded_build` | first line in the child |
 | `app_imported` | INFO | `duration_ms`, `tasks` | after the app import (skipped if inherited through a fork with preload) |
-| `gc_mode_applied` | INFO | `mode`, `thresholds`, `frozen_count` | K3 `worker.gc_mode` |
-| `gc_reenabled` | WARNING | `layer`, `module`, `job_id`, `stack` (top 8 frames) | K3 gcwatch saw the GC turned back on while `gc_mode` expects it off |
+| `gc_mode_applied` | DEBUG | `phase` (`parent_early`, `before_fork`, `child_early`), `mode`, `enabled`, `threshold`, `frozen` | K3: a `worker.gc_mode` hook ran (also logged by the master and the forkserver) |
+| `gc_reenabled` | WARNING | `layer` (`shim`, `import_flip`, `poll`, `collection_while_disabled`), `module`, `job_id`, `note`, `stack` (top 8 frames) | K3 gcwatch saw the GC turned on (or an automatic collection) while `gc_mode` expects it off; each layer reports once per flip. Also logged by the master/forkserver |
 | `gil_forced_off` | WARNING | `module` | K4: `PYTHON_GIL=0` kept the GIL off despite a legacy extension ("running unsafe on purpose") |
 | `interp_import_failed` | ERROR | `task`, `error_type`, `error_message` | K4: a module couldn't be imported inside a subinterpreter |
 | `gil_reenabled` | WARNING | `module`, `detected_after_import_of`, `import_chain`, `origin`, `hint` | K4 gilwatch detected the GIL turning on |

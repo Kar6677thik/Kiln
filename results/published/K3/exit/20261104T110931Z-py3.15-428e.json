@@ -1,0 +1,50 @@
+{
+  "config": {},
+  "experiment": "exit",
+  "git": {
+    "commit": "c68b227",
+    "dirty": true
+  },
+  "host": {
+    "cpu_model": "Intel(R) Core(TM) Ultra 5 225H",
+    "cpus": 14,
+    "kernel": "6.6.87.2-microsoft-standard-WSL2",
+    "mem_total_bytes": 7751778304,
+    "notes": "source=9p",
+    "pinned_cpus": null,
+    "wsl": true
+  },
+  "interpreter": {
+    "build": "gil",
+    "executable": "/home/Megatron/.cache/kiln/venvs/py3.15/bin/python",
+    "gil_enabled_at_end": true,
+    "implementation": "cpython",
+    "jit_enabled": false,
+    "version": "3.15.1"
+  },
+  "metrics": {
+    "atexit_ran": {
+      "unit": "count",
+      "value": 1
+    },
+    "final_collection_ran": {
+      "unit": "count",
+      "value": 1
+    },
+    "shutdown_ms": {
+      "unit": "ms",
+      "value": 568.5
+    }
+  },
+  "milestone": "K3",
+  "notes": "",
+  "params": {
+    "mb": 300,
+    "trick": false
+  },
+  "repeat_index": 8,
+  "run_id": "20261104T110931Z-py3.15-428e",
+  "schema_version": 1,
+  "started_at": "2026-11-04T11:09:31.397Z",
+  "variant": "spawn-trick-False"
+}

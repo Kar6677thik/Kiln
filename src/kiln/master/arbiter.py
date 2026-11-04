@@ -35,6 +35,7 @@ from kiln import __version__, logsetup
 from kiln.app import App, AppLoadError, load_app
 from kiln.config import Config, ConfigError, load_config
 from kiln.errors import ErrorCode
+from kiln.labs import preload
 from kiln.launch.forkserver import ForkserverError
 from kiln.master import dispatcher
 from kiln.master.connections import ACCEPT_BATCH, MAX_CLIENTS, Connection, PeerClosed
@@ -43,6 +44,8 @@ from kiln.master.signals import SignalPipe
 from kiln.master.supervisor import Supervisor
 from kiln.master.timers import TimerHeap
 from kiln.master.workers import WorkerHandle, WorkerTable
+from kiln.memory import exittrick, gcmodes
+from kiln.memory.gcwatch import GcWatch
 from kiln.protocol.framing import FrameError, FrameTooLarge
 from kiln.protocol.messages import (
     BadRequest,
@@ -121,6 +124,8 @@ class Arbiter:
         self.manifest: dict[str, object] = {}
         self.manifest_generation = -1
         self.preloaded_app: App | None = None
+        self.shutdown_started_mono = 0.0  # set by begin_shutdown
+        self.gc_watch: GcWatch | None = None  # K3: set when labs.gc_watch = true
         self.listener: socket.socket | None = None
         self.signals: SignalPipe | None = None
         self.supervisor = Supervisor(self)
@@ -319,6 +324,7 @@ class Arbiter:
             memory_events="readable" if events else "unavailable",
         )
         method = self.supervisor.launcher.name
+        self._apply_k3_settings(method)
         if cfg.app.preload and method == "spawn":
             # WHY (K2 spec §5.3): a spawned worker is a fresh interpreter and imports the app
             # itself; nothing preloaded here could reach it.
@@ -349,6 +355,8 @@ class Arbiter:
                 duration_ms=round((time.monotonic() - started) * 1000, 2),
                 tasks=len(self.preloaded_app.tasks()),
             )
+        if method == "fork":
+            self._build_preload_graph()
         try:
             # WHY: forkserver: start the server now (it preloads the app, not the master).
             self.supervisor.start_launcher()
@@ -378,7 +386,64 @@ class Arbiter:
         while not self._finished:
             self._loop_once()
         self._cleanup()
+        exittrick.set_exit_code(self.exit_code)
         return self.exit_code
+
+    def _apply_k3_settings(self, method: str) -> None:
+        """Apply the master's part of worker.gc_mode and worker.exit_via_os_exit (K3 §5.5, §5.6).
+
+        Why:
+            Under fork the master is the parent whose memory workers share, so its GC must be
+            set up *before* the app and the preload graph exist. Under forkserver the server
+            does this instead; under spawn nothing is shared.
+
+        Args:
+            method: the start method.
+        """
+        cfg = self.config
+        if cfg.worker.exit_via_os_exit:
+            exittrick.install()
+            if method in ("fork", "forkserver"):
+                logsetup.event(
+                    log,
+                    logging.INFO,
+                    "exit_trick_noop_for_workers",
+                    reason="forked workers already end with os._exit (ADR-028)",
+                )
+        if method == "fork" and cfg.labs.gc_watch:
+            # WHY (K3 §5.7): before the app is preloaded, so layer B sees its imports.
+            self.gc_watch = gcmodes.install_watch(
+                cfg.worker.gc_mode, in_parent=True, on_event=gcmodes.log_gc_event
+            )
+        if method == "fork":
+            gcmodes.apply_parent_early(cfg.worker.gc_mode)
+        elif method == "spawn" and cfg.worker.gc_mode == "freeze":
+            logsetup.event(
+                log,
+                logging.WARNING,
+                "gc_mode_ignored",
+                reason="gc_mode=freeze has no effect under spawn; nothing is shared",
+            )
+
+    def _build_preload_graph(self) -> None:
+        """Build the K3 preload graph in the master, before the first fork (labs.preload_mb).
+
+        Why:
+            Built here, its pages are shared by every forked worker: the starting point of
+            the copy-on-write lab.
+        """
+        graph = preload.ensure_graph(
+            self.config.labs.preload_mb, self.config.labs.preload_composition
+        )
+        if graph is not None:
+            logsetup.event(
+                log,
+                logging.INFO,
+                "preload_graph_built",
+                records=len(graph.records),
+                traced_mib=round(graph.traced_bytes / 2**20, 1),
+                build_s=graph.build_s,
+            )
 
     def _loop_once(self) -> None:
         """One pass of the loop of spec/01 §4.
@@ -635,6 +700,8 @@ class Arbiter:
         now = time.monotonic()
         self.supervisor.reap()
         self.supervisor.check_heartbeats()
+        if self.gc_watch is not None:
+            self.gc_watch.poll()  # K3 layer C(1): did anything switch the master's GC on?
         if self._ticks % RSS_CHECK_EVERY == 0:
             self.supervisor.check_rss()
         evicted = self.jobs.evict_expired(now)
@@ -659,6 +726,8 @@ class Arbiter:
         upgrading = self.shutting_down
         self.shutting_down = True
         self.shutdown_mode = mode
+        if not upgrading:
+            self.shutdown_started_mono = time.monotonic()
         self.exit_code = EXIT_CODES.get(mode, 1)
         cancelled = []
         if not upgrading:
@@ -717,7 +786,8 @@ class Arbiter:
             logging.INFO,
             "shutdown_finished",
             mode=self.shutdown_mode or "none",
-            duration_ms=round((time.monotonic() - self.started_mono) * 1000, 1),
+            # WHY: from the start of the shutdown (not of the master), as spec/06 defines it.
+            duration_ms=round((time.monotonic() - self.shutdown_started_mono) * 1000, 1),
             forced_kills=self.supervisor.forced_kills,
             exit_code=self.exit_code,
         )

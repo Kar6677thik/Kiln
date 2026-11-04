@@ -21,7 +21,7 @@
 | 14 | [`event-loops`](event-loops.md) (selectors part; K5 adds the asyncio part) | K1, K5 | ✍️ |
 | 15 | [`state-machines`](state-machines.md) | K1 | ✍️ |
 | 16 | [`delivery-semantics`](delivery-semantics.md) | K1 | ✍️ |
-| 17 | [`memory-metrics`](memory-metrics.md) (RSS; K3 extends with PSS/USS) | K1, K3 | ✍️ |
+| 17 | [`memory-metrics`](memory-metrics.md) (RSS; extended in K3 with PSS/USS/shared/private) | K1, K3 | ✍️ |
 | 18 | [`cgroups-and-oom-killer`](cgroups-and-oom-killer.md) | K1 | ✍️ |
 | 19 | `observability` (deferred: the logging format is taught in spec/06 and python/logging-basics for now) | K1 | ⏳ |
 | 20 | `testing-multiprocess-code` (deferred: the code tour's stop on tests/support/kiln_helpers.py covers it for now) | K1 | ⏳ |
@@ -33,16 +33,16 @@
 | 26 | [`reparenting-and-orphans`](reparenting-and-orphans.md) | K2 | ✍️ |
 | 27 | [`ast-and-symtable`](ast-and-symtable.md) | K2 | ✍️ |
 | 28 | [`static-vs-dynamic-analysis`](static-vs-dynamic-analysis.md) | K2 | ✍️ |
-| 29 | `virtual-memory-and-pages` | K3 | ⏳ |
-| 30 | `copy-on-write` | K3 | ⏳ |
-| 31 | `smaps` | K3 | ⏳ |
-| 32 | `refcounting` | K3 | ⏳ |
-| 33 | `garbage-collector` | K3 | ⏳ |
-| 34 | `gc-freeze` | K3 | ⏳ |
-| 35 | `immortal-objects` | K3 | ⏳ |
-| 36 | `finalization-and-atexit` | K3 | ⏳ |
-| 37 | `global-interpreter-state` | K3 | ⏳ |
-| 38 | `benchmarking-statistics` (first version; K9 extends it) | K3, K9 | ⏳ |
+| 29 | [`virtual-memory-and-pages`](virtual-memory-and-pages.md) | K3 | ✍️ |
+| 30 | [`copy-on-write`](copy-on-write.md) | K3 | ✍️ |
+| 31 | [`smaps`](smaps.md) | K3 | ✍️ |
+| 32 | [`refcounting`](refcounting.md) | K3 | ✍️ |
+| 33 | [`garbage-collector`](garbage-collector.md) | K3 | ✍️ |
+| 34 | [`gc-freeze`](gc-freeze.md) | K3 | ✍️ |
+| 35 | [`immortal-objects`](immortal-objects.md) | K3 | ✍️ |
+| 36 | [`finalization-and-atexit`](finalization-and-atexit.md) | K3 | ✍️ |
+| 37 | [`global-interpreter-state`](global-interpreter-state.md) | K3 | ✍️ |
+| 38 | `benchmarking-statistics` (deferred to K9: K3's lab reports medians and bootstrap CIs computed in its driver, explained in the lab report) | K3, K9 | ⏳ |
 | 39 | `threads` | K4 | ⏳ |
 | 40 | `gil` | K4 | ⏳ |
 | 41 | `free-threading` | K4 | ⏳ |

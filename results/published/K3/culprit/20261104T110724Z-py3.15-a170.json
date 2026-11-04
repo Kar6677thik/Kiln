@@ -1,0 +1,61 @@
+{
+  "config": {},
+  "experiment": "culprit",
+  "git": {
+    "commit": "c68b227",
+    "dirty": true
+  },
+  "host": {
+    "cpu_model": "Intel(R) Core(TM) Ultra 5 225H",
+    "cpus": 14,
+    "kernel": "6.6.87.2-microsoft-standard-WSL2",
+    "mem_total_bytes": 7751778304,
+    "notes": "source=9p",
+    "pinned_cpus": null,
+    "wsl": true
+  },
+  "interpreter": {
+    "build": "gil",
+    "executable": "/home/Megatron/.cache/kiln/venvs/py3.15/bin/python",
+    "gil_enabled_at_end": true,
+    "implementation": "cpython",
+    "jit_enabled": false,
+    "version": "3.15.1"
+  },
+  "metrics": {
+    "collections_during_churn": {
+      "samples": [
+        0,
+        0
+      ],
+      "unit": "count"
+    },
+    "events_collection_while_disabled": {
+      "unit": "count",
+      "value": 0
+    },
+    "events_import_flip": {
+      "unit": "count",
+      "value": 0
+    },
+    "events_poll": {
+      "unit": "count",
+      "value": 0
+    },
+    "events_shim": {
+      "unit": "count",
+      "value": 1
+    }
+  },
+  "milestone": "K3",
+  "notes": "{\"layers\": {\"shim\": [\"master:null\"]}, \"events\": [{\"ts\": \"2026-11-04T11:07:21.249+00:00\", \"level\": \"WARNING\", \"role\": \"master\", \"pid\": \"22694\", \"event\": \"gc_reenabled\", \"layer\": \"shim\", \"module\": \"null\", \"job_id\": \"null\", \"note\": \"gc.enable() called; harmless under threshold0: automatic collections stay off\", \"stack\": \"<frozen importlib._bootstrap>:1350 in _find_and_load | <frozen importlib._bootstrap>:1309 in _find_and_load_unlocked | <frozen importlib._bootstrap>:915 in _load_unlocked | /mnt/c/Users/Karthik Reddy/Documents/Study/Projects/Kiln/src/kiln/memory/gcwatch.py:145 in exec_module | <frozen importlib._bootstrap_external>:751 in exec_module | <frozen importlib._bootstrap>:549 in _call_with_frames_removed | /mnt/c/Users/Karthik Reddy/Documents/Study/Projects/Kiln/labs/k3/rogue_gc_enabler.py:50 in <module> | /mnt/c/Users/Karthik Reddy/Documents/Study/Projects/Kiln/src/kiln/memory/gcwatch.py:257 in _shim_enable\"}]}",
+  "params": {
+    "culprit": "python",
+    "mode": "threshold0"
+  },
+  "repeat_index": 0,
+  "run_id": "20261104T110724Z-py3.15-a170",
+  "schema_version": 1,
+  "started_at": "2026-11-04T11:07:24.777Z",
+  "variant": "python-threshold0"
+}

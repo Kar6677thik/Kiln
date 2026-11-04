@@ -1,0 +1,14 @@
+normal end:
+  main: done
+  atexit: handler registered SECOND runs FIRST
+  atexit: handler registered FIRST runs LAST
+  finalizer: Resource.__del__ ran during shutdown
+  exit code 0
+os._exit(0) at the end:
+  main: done
+  exit code 0
+Instagram's trick:
+  main: done
+  atexit: handler registered SECOND runs FIRST
+  atexit: handler registered FIRST runs LAST
+  exit code 0

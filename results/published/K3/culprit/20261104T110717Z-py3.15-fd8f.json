@@ -1,0 +1,61 @@
+{
+  "config": {},
+  "experiment": "culprit",
+  "git": {
+    "commit": "c68b227",
+    "dirty": true
+  },
+  "host": {
+    "cpu_model": "Intel(R) Core(TM) Ultra 5 225H",
+    "cpus": 14,
+    "kernel": "6.6.87.2-microsoft-standard-WSL2",
+    "mem_total_bytes": 7751778304,
+    "notes": "source=9p",
+    "pinned_cpus": null,
+    "wsl": true
+  },
+  "interpreter": {
+    "build": "gil",
+    "executable": "/home/Megatron/.cache/kiln/venvs/py3.15/bin/python",
+    "gil_enabled_at_end": true,
+    "implementation": "cpython",
+    "jit_enabled": false,
+    "version": "3.15.1"
+  },
+  "metrics": {
+    "collections_during_churn": {
+      "samples": [
+        0,
+        0
+      ],
+      "unit": "count"
+    },
+    "events_collection_while_disabled": {
+      "unit": "count",
+      "value": 1
+    },
+    "events_import_flip": {
+      "unit": "count",
+      "value": 1
+    },
+    "events_poll": {
+      "unit": "count",
+      "value": 1
+    },
+    "events_shim": {
+      "unit": "count",
+      "value": 1
+    }
+  },
+  "milestone": "K3",
+  "notes": "{\"layers\": {\"shim\": [\"master:null\"], \"import_flip\": [\"master:rogue_gc_enabler\"], \"poll\": [\"master:null\"], \"collection_while_disabled\": [\"master:null\"]}, \"events\": [{\"ts\": \"2026-11-04T11:07:14.033+00:00\", \"level\": \"WARNING\", \"role\": \"master\", \"pid\": \"22687\", \"event\": \"gc_reenabled\", \"layer\": \"shim\", \"module\": \"null\", \"job_id\": \"null\", \"note\": \"gc.enable() called\", \"stack\": \"<frozen importlib._bootstrap>:1350 in _find_and_load | <frozen importlib._bootstrap>:1309 in _find_and_load_unlocked | <frozen importlib._bootstrap>:915 in _load_unlocked | /mnt/c/Users/Karthik Reddy/Documents/Study/Projects/Kiln/src/kiln/memory/gcwatch.py:145 in exec_module | <frozen importlib._bootstrap_external>:751 in exec_module | <frozen importlib._bootstrap>:549 in _call_with_frames_removed | /mnt/c/Users/Karthik Reddy/Documents/Study/Projects/Kiln/labs/k3/rogue_gc_enabler.py:50 in <module> | /mnt/c/Users/Karthik Reddy/Documents/Study/Projects/Kiln/src/kiln/memory/gcwatch.py:257 in _shim_enable\"}, {\"ts\": \"2026-11-04T11:07:14.033+00:00\", \"level\": \"WARNING\", \"role\": \"master\", \"pid\": \"22687\", \"event\": \"gc_reenabled\", \"layer\": \"import_flip\", \"module\": \"rogue_gc_enabler\", \"job_id\": \"null\", \"note\": \"GC enabled during import\", \"stack\": \"\"}, {\"ts\": \"2026-11-04T11:07:15.035+00:00\", \"level\": \"WARNING\", \"role\": \"master\", \"pid\": \"22687\", \"event\": \"gc_reenabled\", \"layer\": \"poll\", \"module\": \"null\", \"job_id\": \"null\", \"note\": \"GC found enabled by the poll\", \"stack\": \"\"}, {\"ts\": \"2026-11-04T11:07:17.003+00:00\", \"level\": \"WARNING\", \"role\": \"master\", \"pid\": \"22687\", \"event\": \"gc_reenabled\", \"layer\": \"collection_while_disabled\", \"module\": \"null\", \"job_id\": \"null\", \"note\": \"automatic gen-0 collection; stack = allocation site, not culprit\", \"stack\": \"/mnt/c/Users/Karthik Reddy/Documents/Study/Projects/Kiln/src/kiln/master/arbiter.py:477 in _loop_once | /mnt/c/Users/Karthik Reddy/Documents/Study/Projects/Kiln/src/kiln/master/dispatcher.py:68 in dispatch | /mnt/c/Users/Karthik Reddy/Documents/Study/Projects/Kiln/src/kiln/protocol/messages.py:810 in message | /home/Megatron/.local/share/uv/python/cpython-3.15.1-linux-x86_64-gnu/lib/python3.15/dataclasses.py:1517 in asdict | /home/Megatron/.local/share/uv/python/cpython-3.15.1-linux-x86_64-gnu/lib/python3.15/dataclasses.py:1529 in _asdict_inner | /home/Megatron/.local/share/uv/python/cpython-3.15.1-linux-x86_64-gnu/lib/python3.15/dataclasses.py:1480 in fields | /home/Megatron/.local/share/uv/python/cpython-3.15.1-linux-x86_64-gnu/lib/python3.15/dataclasses.py:1480 in <genexpr> | /mnt/c/Users/Karthik Reddy/Documents/Study/Projects/Kiln/src/kiln/memory/gcwatch.py:280 in _collection_sentinel\"}]}",
+  "params": {
+    "culprit": "python",
+    "mode": "disabled"
+  },
+  "repeat_index": 0,
+  "run_id": "20261104T110717Z-py3.15-fd8f",
+  "schema_version": 1,
+  "started_at": "2026-11-04T11:07:17.629Z",
+  "variant": "python-disabled"
+}

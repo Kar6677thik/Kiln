@@ -1,0 +1,10 @@
+import ctypes, gc
+libc = ctypes.CDLL(None)
+libc.getpid() == __import__("os").getpid()
+libc.strlen(b"kiln")
+ctypes.pythonapi.PyGC_IsEnabled()
+gc.disable()
+ctypes.pythonapi.PyGC_IsEnabled()
+ctypes.pythonapi.PyGC_Enable()
+gc.isenabled()
+type(ctypes.pythonapi).__name__, type(libc).__name__

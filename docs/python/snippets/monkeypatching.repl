@@ -1,0 +1,15 @@
+import gc
+original = gc.enable
+calls = []
+def spy():
+    calls.append("someone called gc.enable")
+    original()
+
+gc.enable = spy
+gc.disable()
+gc.enable()
+calls, gc.isenabled()
+from gc import enable as saved_before
+saved_before is spy
+gc.enable = original
+gc.enable is original

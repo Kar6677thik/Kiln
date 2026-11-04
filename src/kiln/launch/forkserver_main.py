@@ -38,8 +38,10 @@ import time
 from kiln import logsetup
 from kiln.app import App, AppLoadError, load_app
 from kiln.config import Config
+from kiln.labs import preload as preload_graph
 from kiln.launch.base import WorkerLaunchSpec
 from kiln.launch.fork import fork_child
+from kiln.memory import gcmodes
 from kiln.protocol.framing import FrameDecoder, encode_frame
 from kiln.protocol.messages import MsgType
 
@@ -299,8 +301,13 @@ def main(argv: list[str]) -> int:
     logsetup.configure("forkserver", config.log.level, config.log.format, config.log.file)
     control = socket.socket(fileno=args.control_fd)
     started = time.monotonic()
+    # WHY (K3 §5.5): the forkserver is the "parent" whose memory the workers share.
+    if config.labs.gc_watch:
+        gcmodes.install_watch(config.worker.gc_mode, in_parent=True, on_event=gcmodes.log_gc_event)
+    gcmodes.apply_parent_early(config.worker.gc_mode)
     try:
         app, names = preload(config)
+        graph = preload_graph.ensure_graph(config.labs.preload_mb, config.labs.preload_composition)
     except AppLoadError as error:
         logsetup.event(log, logging.CRITICAL, "forkserver_preload_failed", error=str(error))
         control.sendall(
@@ -320,6 +327,15 @@ def main(argv: list[str]) -> int:
     logsetup.event(
         log, logging.INFO, "forkserver_ready", preload=",".join(names), preload_ms=elapsed
     )
+    if graph is not None:
+        logsetup.event(
+            log,
+            logging.INFO,
+            "preload_graph_built",
+            records=len(graph.records),
+            traced_mib=round(graph.traced_bytes / 2**20, 1),
+            build_s=graph.build_s,
+        )
     return server.run()
 
 

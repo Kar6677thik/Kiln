@@ -1,0 +1,23 @@
+import gc
+gc.isenabled()
+gc.get_threshold()
+gc.get_count()
+gc.collect()
+gc.get_count()
+gc.disable()
+gc.isenabled()
+gc.collect(0)
+gc.enable()
+gc.set_threshold(0)
+gc.isenabled(), gc.get_threshold()
+gc.set_threshold(2000, 10, 10)
+starts = []
+gc.callbacks.append(lambda phase, info: phase == "start" and starts.append(info["generation"]))
+gc.collect(1)
+starts
+gc.callbacks.clear()
+gc.freeze()
+gc.get_freeze_count() > 0
+gc.unfreeze()
+gc.get_freeze_count()
+len(gc.get_stats()), sorted(gc.get_stats()[0])

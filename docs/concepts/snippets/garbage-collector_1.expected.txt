@@ -1,0 +1,6 @@
+threshold: (<NUM>, <NUM>, <NUM>)  is a list tracked by the GC? True  an int? False
+default                                        automatic collections: <NUM>
+gc.disable()                                   automatic collections: 0
+gc.disable() then a library calls gc.enable()  automatic collections: <NUM>
+gc.set_threshold(0), then gc.enable()          automatic collections: 0
+explicit gc.collect() while disabled: ran 1 collection, found <NUM> objects

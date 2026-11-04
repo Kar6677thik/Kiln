@@ -97,6 +97,7 @@ Values from env vars are parsed as TOML values (`KILN_MASTER__WORKERS=8` becomes
 | `labs.enabled` | bool | `false` | registers the `labs.*` tasks |
 | `labs.preload_mb` | int | `0` | K3: size of the object graph preloaded in the master |
 | `labs.gc_watch` | bool | `false` | K3: install the "who re-enabled the GC?" detector (`memory/gcwatch.py`) in the master and workers |
+| `labs.preload_composition` | `"mortal"`/`"immortal-heavy"` | `"mortal"` | K3 lab (b): what the preload graph's leaf values are made of ([ADR-036](../decisions.md#adr-036)) |
 | `log.level` | str | `"INFO"` | |
 | `log.format` | `"kv"`/`"json"` | `"kv"` | |
 | `log.file` | str or `""` | `""` | `""` means stderr |
@@ -133,7 +134,7 @@ Implemented with `argparse` (stdlib). Every subcommand has `--help` text written
 | `kiln reload` / `kiln stop [--fast]` / `kiln scale +N\|-N` | K1 | sends SIGHUP / SIGTERM (SIGINT×2 with `--fast`) / SIGTTIN×N or SIGTTOU×N to the pid from `--pidfile` |
 | `kiln bench load --jobs N (--concurrency C \| --rate R) [--task T] [--args JSON] [--kwargs JSON] [--reload-every S] [--pidfile F] [--out DIR]` | K1 | load generator: closed loop (`--concurrency`) or open loop (`--rate`, which avoids coordinated omission). `{i}` inside `--args`/`--kwargs` is replaced by the job's index (K6 needs unique keys). Writes an ExperimentRecord |
 | `kiln forkcheck PATH... [--format text\|json] [--confirm]` | K2 | ★ the fork-assumption checker |
-| `kiln mem PID...` | K3 | prints RSS/PSS/USS/shared for processes, from `/proc` |
+| `kiln mem PID... [--children-of PID] [--json] [--watch S]` | K3 | prints RSS/PSS/USS/Shared/Private_Dirty/Swap per process from `/proc/<pid>/smaps_rollup`, with a Σ row; `--children-of` adds a master's workers (and the forkserver's) |
 | `kiln debug WORKER_ID OP [--params JSON]` | K6 | sends a KP `debug` request |
 | `kiln bench matrix [--suite S] [--interpreters ...] [--repeats N]` | K9 | runs the cross-interpreter matrix |
 | `kiln report RESULTS_DIR -o report.html` | K9 | renders HTML (needs Python ≥ 3.14 for t-strings) |

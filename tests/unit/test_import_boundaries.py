@@ -35,6 +35,7 @@ ALLOWED: dict[str, set[str]] = {
         "kiln.memory",
         "kiln.worker",
         "kiln.app",
+        "kiln.labs",  # ADR-036: the forkserver builds the K3 preload graph
     },  # ADR-033
     "kiln.master": {
         "kiln.protocol",

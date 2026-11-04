@@ -1,0 +1,11 @@
+import tracemalloc
+tracemalloc.start()
+before, _ = tracemalloc.get_traced_memory()
+data = [str(i) * 10 for i in range(100_000)]
+current, peak = tracemalloc.get_traced_memory()
+round((current - before) / 2**20, 1)
+del data
+current2, peak2 = tracemalloc.get_traced_memory()
+round(current2 / 2**20, 2), round(peak2 / 2**20, 1)
+tracemalloc.stop()
+tracemalloc.is_tracing()

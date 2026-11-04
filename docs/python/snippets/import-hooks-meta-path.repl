@@ -1,0 +1,19 @@
+import sys, importlib.abc
+[type(f).__name__ for f in sys.meta_path]
+class Logger(importlib.abc.MetaPathFinder):
+    def find_spec(self, name, path, target=None):
+        for finder in sys.meta_path[1:]:
+            spec = finder.find_spec(name, path, target)
+            if spec is not None:
+                real = spec.loader.exec_module
+                def exec_module(module, real=real):
+                    print("executing", module.__name__)
+                    real(module)
+                spec.loader.exec_module = exec_module
+                return spec
+        return None
+
+sys.meta_path.insert(0, Logger())
+import colorsys
+import colorsys
+sys.meta_path.pop(0).__class__.__name__

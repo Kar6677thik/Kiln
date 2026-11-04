@@ -46,19 +46,28 @@ class HeartbeatThread(threading.Thread):
     """
 
     def __init__(
-        self, channel: Channel, interval_s: float, progress: Callable[[], tuple[int, int]]
+        self,
+        channel: Channel,
+        interval_s: float,
+        progress: Callable[[], tuple[int, int]],
+        on_tick: Callable[[], object] | None = None,
     ) -> None:
         """Prepare the thread (call start() to run it).
+
+        Why:
+            on_tick lets K3's gcwatch poll ride on a thread that already wakes regularly.
 
         Args:
             channel: the shared channel (its send is thread-safe).
             interval_s: worker.heartbeat_interval_s.
             progress: returns (jobs_done, inflight) for the heartbeat fields.
+            on_tick: called once per interval (K3: the gcwatch poll, layer C(1)).
         """
         super().__init__(name="kiln-heartbeat", daemon=True)
         self.channel = channel
         self.interval_s = interval_s
         self.progress = progress
+        self.on_tick = on_tick
         self._stop_event = threading.Event()
 
     def run(self) -> None:
@@ -69,6 +78,8 @@ class HeartbeatThread(threading.Thread):
             worker exits promptly.
         """
         while not self._stop_event.is_set():
+            if self.on_tick is not None:
+                self.on_tick()
             jobs_done, inflight = self.progress()
             try:
                 rss = read_status("self").vm_rss

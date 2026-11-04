@@ -1,0 +1,61 @@
+{
+  "config": {},
+  "experiment": "culprit",
+  "git": {
+    "commit": "c68b227",
+    "dirty": true
+  },
+  "host": {
+    "cpu_model": "Intel(R) Core(TM) Ultra 5 225H",
+    "cpus": 14,
+    "kernel": "6.6.87.2-microsoft-standard-WSL2",
+    "mem_total_bytes": 7751778304,
+    "notes": "source=9p",
+    "pinned_cpus": null,
+    "wsl": true
+  },
+  "interpreter": {
+    "build": "gil",
+    "executable": "/home/Megatron/.cache/kiln/venvs/py3.15/bin/python",
+    "gil_enabled_at_end": true,
+    "implementation": "cpython",
+    "jit_enabled": false,
+    "version": "3.15.1"
+  },
+  "metrics": {
+    "collections_during_churn": {
+      "samples": [
+        193,
+        193
+      ],
+      "unit": "count"
+    },
+    "events_collection_while_disabled": {
+      "unit": "count",
+      "value": 2
+    },
+    "events_import_flip": {
+      "unit": "count",
+      "value": 0
+    },
+    "events_poll": {
+      "unit": "count",
+      "value": 2
+    },
+    "events_shim": {
+      "unit": "count",
+      "value": 0
+    }
+  },
+  "milestone": "K3",
+  "notes": "{\"layers\": {\"collection_while_disabled\": [\"worker:null\", \"worker:null\"], \"poll\": [\"worker:null\", \"worker:null\"]}, \"events\": [{\"ts\": \"2026-11-04T11:07:42.898+00:00\", \"level\": \"WARNING\", \"role\": \"worker\", \"pid\": \"22720\", \"worker_id\": \"0\", \"event\": \"gc_reenabled\", \"layer\": \"collection_while_disabled\", \"module\": \"null\", \"job_id\": \"d572ca2677c748b7af17d3c4b089402a\", \"note\": \"automatic gen-0 collection; stack = allocation site, not culprit\", \"stack\": \"/mnt/c/Users/Karthik Reddy/Documents/Study/Projects/Kiln/src/kiln/launch/fork.py:81 in fork_child | /mnt/c/Users/Karthik Reddy/Documents/Study/Projects/Kiln/src/kiln/launch/fork.py:170 in _child | /mnt/c/Users/Karthik Reddy/Documents/Study/Projects/Kiln/src/kiln/worker/main.py:295 in run_worker | /mnt/c/Users/Karthik Reddy/Documents/Study/Projects/Kiln/src/kiln/worker/main.py:369 in _receive_loop | /mnt/c/Users/Karthik Reddy/Documents/Study/Projects/Kiln/src/kiln/worker/executors/sync.py:55 in submit | /mnt/c/Users/Karthik Reddy/Documents/Study/Projects/Kiln/src/kiln/worker/executors/base.py:110 in run_task | /mnt/c/Users/Karthik Reddy/Documents/Study/Projects/Kiln/src/kiln/labs/tasks.py:253 in churn | /mnt/c/Users/Karthik Reddy/Documents/Study/Projects/Kiln/src/kiln/memory/gcwatch.py:280 in _collection_sentinel\"}, {\"ts\": \"2026-11-04T11:07:42.899+00:00\", \"level\": \"WARNING\", \"role\": \"worker\", \"pid\": \"22721\", \"worker_id\": \"1\", \"event\": \"gc_reenabled\", \"layer\": \"collection_while_disabled\", \"module\": \"null\", \"job_id\": \"118e7042b78d4a129d2d641005eb899a\", \"note\": \"automatic gen-0 collection; stack = allocation site, not culprit\", \"stack\": \"/mnt/c/Users/Karthik Reddy/Documents/Study/Projects/Kiln/src/kiln/launch/fork.py:81 in fork_child | /mnt/c/Users/Karthik Reddy/Documents/Study/Projects/Kiln/src/kiln/launch/fork.py:170 in _child | /mnt/c/Users/Karthik Reddy/Documents/Study/Projects/Kiln/src/kiln/worker/main.py:295 in run_worker | /mnt/c/Users/Karthik Reddy/Documents/Study/Projects/Kiln/src/kiln/worker/main.py:369 in _receive_loop | /mnt/c/Users/Karthik Reddy/Documents/Study/Projects/Kiln/src/kiln/worker/executors/sync.py:55 in submit | /mnt/c/Users/Karthik Reddy/Documents/Study/Projects/Kiln/src/kiln/worker/executors/base.py:110 in run_task | /mnt/c/Users/Karthik Reddy/Documents/Study/Projects/Kiln/src/kiln/labs/tasks.py:253 in churn | /mnt/c/Users/Karthik Reddy/Documents/Study/Projects/Kiln/src/kiln/memory/gcwatch.py:280 in _collection_sentinel\"}, {\"ts\": \"2026-11-04T11:07:43.208+00:00\", \"level\": \"WARNING\", \"role\": \"worker\", \"pid\": \"22720\", \"worker_id\": \"0\", \"event\": \"gc_reenabled\", \"layer\": \"poll\", \"module\": \"null\", \"job_id\": \"d572ca2677c748b7af17d3c4b089402a\", \"note\": \"GC found enabled by the poll\", \"stack\": \"\"}, {\"ts\": \"2026-11-04T11:07:43.210+00:00\", \"level\": \"WARNING\", \"role\": \"worker\", \"pid\": \"22721\", \"worker_id\": \"1\", \"event\": \"gc_reenabled\", \"layer\": \"poll\", \"module\": \"null\", \"job_id\": \"118e7042b78d4a129d2d641005eb899a\", \"note\": \"GC found enabled by the poll\", \"stack\": \"\"}]}",
+  "params": {
+    "culprit": "runtime",
+    "mode": "disabled"
+  },
+  "repeat_index": 0,
+  "run_id": "20261104T110745Z-py3.15-14bb",
+  "schema_version": 1,
+  "started_at": "2026-11-04T11:07:45.722Z",
+  "variant": "runtime-disabled"
+}

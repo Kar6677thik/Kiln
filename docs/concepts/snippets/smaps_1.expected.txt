@@ -1,0 +1,4 @@
+one raw 'Rss:' line: Rss: <ANY> kB
+parent Rss <ANY>Pss <ANY>USS <ANY>Shared <ANY>(MiB)
+child  Rss <ANY>Pss <ANY>USS <ANY>Shared <ANY>(MiB)
+sum of RSS = <ANY>MiB   sum of PSS = <ANY>MiB

@@ -1,0 +1,328 @@
+{
+  "config": {},
+  "experiment": "composition",
+  "git": {
+    "commit": "c68b227",
+    "dirty": true
+  },
+  "host": {
+    "cpu_model": "Intel(R) Core(TM) Ultra 5 225H",
+    "cpus": 14,
+    "kernel": "6.6.87.2-microsoft-standard-WSL2",
+    "mem_total_bytes": 7751778304,
+    "notes": "source=9p",
+    "pinned_cpus": null,
+    "wsl": true
+  },
+  "interpreter": {
+    "build": "gil",
+    "executable": "/home/Megatron/.cache/kiln/venvs/py3.15/bin/python",
+    "gil_enabled_at_end": true,
+    "implementation": "cpython",
+    "jit_enabled": false,
+    "version": "3.15.1"
+  },
+  "metrics": {
+    "P0_gen0_collections": {
+      "samples": [
+        19,
+        19,
+        19,
+        19
+      ],
+      "unit": "count"
+    },
+    "P0_gen1_collections": {
+      "samples": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "unit": "count"
+    },
+    "P0_gen2_collections": {
+      "samples": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "unit": "count"
+    },
+    "P0_parent_pss_bytes": {
+      "unit": "bytes",
+      "value": 82806784
+    },
+    "P0_private_dirty_per_worker_bytes": {
+      "samples": [
+        3530752,
+        3481600,
+        3452928,
+        3420160
+      ],
+      "unit": "bytes"
+    },
+    "P0_pss_anon_per_worker_bytes": {
+      "samples": [
+        80332800,
+        80300032,
+        80283648,
+        80268288
+      ],
+      "unit": "bytes"
+    },
+    "P0_pss_per_worker_bytes": {
+      "samples": [
+        81185792,
+        81153024,
+        81136640,
+        81120256
+      ],
+      "unit": "bytes"
+    },
+    "P0_rss_per_worker_bytes": {
+      "samples": [
+        395517952,
+        395522048,
+        395522048,
+        395522048
+      ],
+      "unit": "bytes"
+    },
+    "P0_shared_per_worker_bytes": {
+      "samples": [
+        391987200,
+        392040448,
+        392069120,
+        392101888
+      ],
+      "unit": "bytes"
+    },
+    "P0_sum_pss_bytes": {
+      "unit": "bytes",
+      "value": 407402496
+    },
+    "P0_sum_rss_bytes": {
+      "unit": "bytes",
+      "value": 1982242816
+    },
+    "P0_uss_per_worker_bytes": {
+      "samples": [
+        3530752,
+        3481600,
+        3452928,
+        3420160
+      ],
+      "unit": "bytes"
+    },
+    "P1_gen0_collections": {
+      "samples": [
+        19,
+        19,
+        19,
+        19
+      ],
+      "unit": "count"
+    },
+    "P1_gen1_collections": {
+      "samples": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "unit": "count"
+    },
+    "P1_gen2_collections": {
+      "samples": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "unit": "count"
+    },
+    "P1_parent_pss_bytes": {
+      "unit": "bytes",
+      "value": 138863616
+    },
+    "P1_private_dirty_per_worker_bytes": {
+      "samples": [
+        73248768,
+        73211904,
+        73183232,
+        73154560
+      ],
+      "unit": "bytes"
+    },
+    "P1_pss_anon_per_worker_bytes": {
+      "samples": [
+        136122368,
+        136097792,
+        136082432,
+        136068096
+      ],
+      "unit": "bytes"
+    },
+    "P1_pss_per_worker_bytes": {
+      "samples": [
+        137000960,
+        136976384,
+        136961024,
+        136946688
+      ],
+      "unit": "bytes"
+    },
+    "P1_rss_per_worker_bytes": {
+      "samples": [
+        395714560,
+        395722752,
+        395722752,
+        395722752
+      ],
+      "unit": "bytes"
+    },
+    "P1_shared_per_worker_bytes": {
+      "samples": [
+        322465792,
+        322510848,
+        322539520,
+        322568192
+      ],
+      "unit": "bytes"
+    },
+    "P1_sum_pss_bytes": {
+      "unit": "bytes",
+      "value": 686748672
+    },
+    "P1_sum_rss_bytes": {
+      "unit": "bytes",
+      "value": 1983172608
+    },
+    "P1_uss_per_worker_bytes": {
+      "samples": [
+        73248768,
+        73211904,
+        73183232,
+        73154560
+      ],
+      "unit": "bytes"
+    },
+    "P2_gen0_collections": {
+      "samples": [
+        19,
+        19,
+        19,
+        19
+      ],
+      "unit": "count"
+    },
+    "P2_gen1_collections": {
+      "samples": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "unit": "count"
+    },
+    "P2_gen2_collections": {
+      "samples": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "unit": "count"
+    },
+    "P2_parent_pss_bytes": {
+      "unit": "bytes",
+      "value": 305803264
+    },
+    "P2_private_dirty_per_worker_bytes": {
+      "samples": [
+        281862144,
+        281837568,
+        281792512,
+        281767936
+      ],
+      "unit": "bytes"
+    },
+    "P2_pss_anon_per_worker_bytes": {
+      "samples": [
+        303016960,
+        302999552,
+        302971904,
+        302960640
+      ],
+      "unit": "bytes"
+    },
+    "P2_pss_per_worker_bytes": {
+      "samples": [
+        303895552,
+        303878144,
+        303850496,
+        303839232
+      ],
+      "unit": "bytes"
+    },
+    "P2_rss_per_worker_bytes": {
+      "samples": [
+        395722752,
+        395726848,
+        395726848,
+        395726848
+      ],
+      "unit": "bytes"
+    },
+    "P2_shared_per_worker_bytes": {
+      "samples": [
+        113860608,
+        113889280,
+        113934336,
+        113958912
+      ],
+      "unit": "bytes"
+    },
+    "P2_sum_pss_bytes": {
+      "unit": "bytes",
+      "value": 1521266688
+    },
+    "P2_sum_rss_bytes": {
+      "unit": "bytes",
+      "value": 1983234048
+    },
+    "P2_uss_per_worker_bytes": {
+      "samples": [
+        281862144,
+        281837568,
+        281792512,
+        281767936
+      ],
+      "unit": "bytes"
+    }
+  },
+  "milestone": "K3",
+  "notes": "",
+  "params": {
+    "composition": "mortal",
+    "graph": {
+      "build_s": "1.971",
+      "event": "preload_graph_built",
+      "level": "INFO",
+      "pid": "22591",
+      "records": "242215",
+      "role": "master",
+      "traced_mib": "300.0",
+      "ts": "2026-11-04T11:05:49.725+00:00"
+    },
+    "mb": 300,
+    "mode": "freeze"
+  },
+  "repeat_index": 3,
+  "run_id": "20261104T110557Z-py3.15-a7b2",
+  "schema_version": 1,
+  "started_at": "2026-11-04T11:05:57.444Z",
+  "variant": "mortal-freeze"
+}

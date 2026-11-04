@@ -32,8 +32,10 @@ from typing import NoReturn
 from kiln import logsetup
 from kiln.app import App, AppLoadError, load_app
 from kiln.config import Config
+from kiln.labs import preload
 from kiln.labs import tasks as lab_tasks
-from kiln.memory.procfs import read_status
+from kiln.memory import gcmodes
+from kiln.memory.procfs import read_smaps_rollup, read_status
 from kiln.protocol.messages import (
     BadRequest,
     BootFailed,
@@ -72,6 +74,7 @@ class WorkerState:
         self.retiring = False
         self.retire_reason = ""
         self.announced = False  # True once `retiring` has been sent to the master
+        self.current_job: str | None = None  # the job running now (gcwatch events name it)
 
     def on_sigterm(self, signum: int, frame: FrameType | None) -> None:
         """SIGTERM handler: finish the current job, then exit (spec/04 §3.1).
@@ -152,15 +155,21 @@ def _over_memory(config: Config) -> bool:
         config: the configuration.
 
     Returns:
-        True if the worker's RSS exceeds the limit.
+        True if the worker's memory (worker.memory_metric: rss, pss or uss) exceeds the limit.
     """
     limit = config.worker.max_rss_mb
     if limit <= 0:
         return False
     try:
-        return read_status("self").vm_rss > limit * 1024 * 1024
+        if config.worker.memory_metric == "rss":
+            value = read_status("self").vm_rss
+        else:
+            # WHY: the worker may block for a few ms here, between jobs; the master may not.
+            rollup = read_smaps_rollup("self")
+            value = rollup.pss if config.worker.memory_metric == "pss" else rollup.uss
     except OSError:
         return False
+    return value > limit * 1024 * 1024
 
 
 def _check_recycling(config: Config, state: WorkerState, max_jobs_limit: int) -> None:
@@ -233,12 +242,24 @@ def run_worker(
     """
     state = WorkerState()
     _setup_signals(state)
+    # WHY (K3 §5.5): before the app is imported, so its import-time objects follow the mode.
+    gcmodes.apply_child_early(config.worker.gc_mode, config.start.method)
+    watch = None
+    if config.labs.gc_watch:
+        # WHY (K3 §5.7): installed before the app is imported, so layer B sees its imports.
+        watch = gcmodes.install_watch(
+            config.worker.gc_mode,
+            in_parent=False,
+            on_event=lambda event: gcmodes.log_gc_event(event, state.current_job),
+        )
     logsetup.configure("worker", config.log.level, config.log.format, config.log.file, worker_id)
     _raise_oom_score()
     chan = Channel(channel, config.protocol.max_frame_bytes)
     loaded = _boot(chan, config, app)
     if loaded is None:
         return EXIT_BOOT_ERROR
+    # WHY: under fork/forkserver the graph was inherited; under spawn this builds our own copy.
+    preload.ensure_graph(config.labs.preload_mb, config.labs.preload_composition)
     executor = SyncExecutor(loaded)
     # WHY: jitter spreads recycling so workers started together don't all restart together.
     # WHY (noqa S311): random isn't for cryptography, and spreading restarts doesn't need it.
@@ -249,6 +270,7 @@ def run_worker(
         chan,
         config.worker.heartbeat_interval_s,
         lambda: (state.jobs_done, executor.inflight()),
+        on_tick=watch.poll if watch is not None else None,
     )
     heartbeat.start()
     ready = Ready(
@@ -319,6 +341,7 @@ def _receive_loop(
         Args:
             result: the job's result.
         """
+        state.current_job = None
         state.jobs_done += 1
         _check_recycling(config, state, max_jobs_limit)
         if not shutdown_received:
@@ -342,6 +365,7 @@ def _receive_loop(
             shutdown_received = True
             continue
         if isinstance(parsed, Run):
+            state.current_job = parsed.job_id
             executor.submit(parsed, finished)
 
 

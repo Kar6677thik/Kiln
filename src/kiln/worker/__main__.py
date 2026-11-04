@@ -22,6 +22,7 @@ import socket
 import sys
 
 from kiln.config import Config
+from kiln.memory import exittrick
 from kiln.worker.main import run_worker
 
 
@@ -47,13 +48,23 @@ def main(argv: list[str]) -> int:
     # WHY: socket.socket(fileno=N) wraps an fd we already own (inherited from the master).
     channel = socket.socket(fileno=args.fd)
     config = Config.from_json(args.config_json)
-    return run_worker(
+    if config.worker.exit_via_os_exit:
+        # WHY (K3 §5.6): registered before the app is imported, so it runs LAST of all atexit
+        # handlers and skips only interpreter finalization
+        # (docs/concepts/finalization-and-atexit.md).
+        # GOTCHA: modules imported above (logging) registered their handlers earlier, so
+        # those run *after* ours and are skipped; logging's only flushes, and our stderr
+        # handler flushes every line anyway.
+        exittrick.install()
+    code = run_worker(
         channel=channel,
         worker_id=args.worker_id,
         generation=args.generation,
         config=config,
         app=None,
     )
+    exittrick.set_exit_code(code)
+    return code
 
 
 if __name__ == "__main__":

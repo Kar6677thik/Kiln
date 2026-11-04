@@ -1,0 +1,4 @@
+end of script  exit=  0  printed: handler B (registered second) | handler A (registered first)
+sys.exit       exit=  3  printed: handler B (registered second) | handler A (registered first)
+os._exit       exit=  3  printed: (nothing)
+SIGKILL        exit= -9  printed: (nothing)
