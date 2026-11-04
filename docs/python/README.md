@@ -28,10 +28,10 @@ Status: ⏳ planned · ✍️ written · ✅ reviewed by the learner
 | 18 | [`argparse`](argparse.md) | K0 | ✍️ |
 | 18a | [`slicing`](slicing.md) | K0 | ✍️ |
 | 18b | [`lambda`](lambda.md) | K0 | ✍️ |
-| 19 | `struct`, `json`, `bytearray-and-memoryview` | K1 | ⏳ |
-| 20 | `slots-and-frozen-dataclasses`, `collections-deque`, `heapq`, `typing-protocol` | K1 | ⏳ |
-| 21 | `threading-basics`, `signal-module`, `os-module`, `socket-module`, `selectors-module` | K1 | ⏳ |
-| 22 | `uuid`, `time-monotonic`, `hypothesis-basics`, `tomllib`, `importlib`, `inspect`, `asyncio-first-look` | K1 | ⏳ |
+| 19 | [`struct`](struct.md), [`json`](json.md), [`bytearray-and-memoryview`](bytearray-and-memoryview.md) | K1 | ✍️ |
+| 20 | [`slots-and-frozen-dataclasses`](slots-and-frozen-dataclasses.md), [`collections-deque`](collections-deque.md), [`heapq`](heapq.md), [`typing-protocol`](typing-protocol.md) | K1 | ✍️ |
+| 21 | [`threading-basics`](threading-basics.md), [`signal-module`](signal-module.md), [`os-module`](os-module.md), [`socket-module`](socket-module.md), [`selectors-module`](selectors-module.md) | K1 | ✍️ |
+| 22 | [`uuid`](uuid.md), [`time-monotonic`](time-monotonic.md), [`hypothesis-basics`](hypothesis-basics.md), [`tomllib`](tomllib.md), [`importlib`](importlib.md), [`inspect`](inspect.md), [`asyncio-first-look`](asyncio-first-look.md) | K1 | ✍️ |
 | 23 | `if-name-main`, `pickle-and-reduce`, `runpy`, `closures`, `functools-partial` | K2 | ⏳ |
 | 24 | `ast-module`, `symtable-module`, `multiprocessing-basics` | K2 | ⏳ |
 | 25 | `gc-module`, `atexit`, `sys-getrefcount`, `monkeypatching` | K3 | ⏳ |
@@ -50,18 +50,25 @@ Status: ⏳ planned · ✍️ written · ✅ reviewed by the learner
 | Feature | Note | First used in (file:line) | Milestone |
 |---|---|---|---|
 | `assert` | [pytest-basics](pytest-basics.md) | [`tests/snippets/test_snippets.py:100`](../../tests/snippets/test_snippets.py) | K0 |
+| `async-await` | [asyncio-first-look](asyncio-first-look.md) | [`src/kiln/bench/load.py:118`](../../src/kiln/bench/load.py) | K1 |
 | `classes-and-objects` | [classes-and-objects](classes-and-objects.md) | [`src/kiln/doctor.py:55`](../../src/kiln/doctor.py) | K0 |
+| `closures` | [decorators](decorators.md) (a nested function remembers outer names; K2 adds a full closures note) | [`src/kiln/app.py:127`](../../src/kiln/app.py) | K1 |
 | `comprehensions` | [comprehensions](comprehensions.md) | [`src/kiln/bench/records.py:392`](../../src/kiln/bench/records.py) | K0 |
 | `context-managers` | [context-managers](context-managers.md) | [`src/kiln/doctor.py:154`](../../src/kiln/doctor.py) | K0 |
 | `dataclasses` | [dataclasses](dataclasses.md) | [`src/kiln/doctor.py:76`](../../src/kiln/doctor.py) | K0 |
 | `decorators` | [decorators](decorators.md) | [`src/kiln/doctor.py:76`](../../src/kiln/doctor.py) | K0 |
+| `del` | [bytearray-and-memoryview](bytearray-and-memoryview.md) (`del buf[:n]`; `del d[key]` removes a dict entry the same way) | [`src/kiln/protocol/framing.py`](../../src/kiln/protocol/framing.py) | K1 |
+| `dunder-methods` | [classes-and-objects](classes-and-objects.md) (`__init__`), [dataclasses](dataclasses.md) (`__repr__`, `__eq__`) | [`src/kiln/errors.py`](../../src/kiln/errors.py) | K1 |
 | `enum` | [enum](enum.md) | [`src/kiln/doctor.py:55`](../../src/kiln/doctor.py) | K0 |
 | `exceptions` | [exceptions](exceptions.md) | [`src/kiln/bench/records.py:139`](../../src/kiln/bench/records.py) | K0 |
 | `f-strings` | [f-strings](f-strings.md) | [`src/kiln/bench/records.py:69`](../../src/kiln/bench/records.py) | K0 |
 | `functions` | [functions](functions.md) | [`src/kiln/bench/records.py:59`](../../src/kiln/bench/records.py) | K0 |
+| `generators` | [context-managers](context-managers.md) (a function with `yield` pauses there; pytest fixtures use the same idea) | [`tests/support/kiln_helpers.py`](../../tests/support/kiln_helpers.py) | K1 |
 | `lambda` | [lambda](lambda.md) | [`tests/snippets/test_snippets.py:83`](../../tests/snippets/test_snippets.py) | K0 |
 | `modules-and-imports` | [modules-and-imports](modules-and-imports.md) | [`src/kiln/__main__.py:20`](../../src/kiln/__main__.py) | K0 |
+| `protocols` | [typing-protocol](typing-protocol.md) | [`src/kiln/worker/executors/base.py:31`](../../src/kiln/worker/executors/base.py) | K1 |
 | `slicing` | [slicing](slicing.md) | [`scripts/check_docs.py:270`](../../scripts/check_docs.py) | K0 |
+| `slots` | [slots-and-frozen-dataclasses](slots-and-frozen-dataclasses.md) | [`src/kiln/app.py:40`](../../src/kiln/app.py) | K1 |
 | `star-args-and-unpacking` | [functions](functions.md) | [`tests/unit/test_doctor.py:63`](../../tests/unit/test_doctor.py) | K0 |
 | `type-hints` | [type-hints](type-hints.md) | [`src/kiln/bench/records.py:59`](../../src/kiln/bench/records.py) | K0 |
 

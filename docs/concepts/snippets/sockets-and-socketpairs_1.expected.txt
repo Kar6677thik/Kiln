@@ -1,0 +1,6 @@
+right received: b'hello from left'
+left received:  b'hi back from right'
+family: AF_UNIX, type: SOCK_STREAM
+server got b'ping' from 127.0.0.1
+listener and connection are different sockets: True
+connecting to a closed port: ConnectionRefusedError (Connection refused)

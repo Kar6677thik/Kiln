@@ -116,12 +116,13 @@ If systemd is enabled in WSL, a one-off memory-limited scope is a single command
 
 ```bash
 (wsl) $ grep -A1 '\[boot\]' /etc/wsl.conf          # should show: systemd=true
-(wsl) $ systemd-run --user --scope -p MemoryMax=512M -p MemorySwapMax=0 \
+(wsl) $ systemd-run --user --scope -p MemoryMax=512M -p MemorySwapMax=0 -p OOMPolicy=continue \
           ./scripts/dev.sh serve-demo --labs
 ```
 
 - `--user --scope` runs the command in a new scope under your user's systemd manager.
 - `MemorySwapMax=0` matters. Without it, the kernel may swap instead of killing, and the lab takes minutes instead of seconds.
+- `OOMPolicy=continue` matters too. By default (`OOMPolicy=stop`) systemd **stops the whole scope**, sending SIGTERM to every process in it, master included, as soon as the kernel OOM-kills any one of them. The first K1 OOM run hit exactly this (errata E-18).
 - If `systemctl --user` reports that it "Failed to connect to bus", the user session bus isn't running. Fall back to §6.2.
 
 **Enabling systemd (if `/etc/wsl.conf` lacks it):** add the following, then run `wsl --shutdown` from PowerShell and reopen Debian:

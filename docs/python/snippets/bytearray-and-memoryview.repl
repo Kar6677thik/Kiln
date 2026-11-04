@@ -1,0 +1,15 @@
+data = b"abc"
+data[0]
+data[0] = 120
+buf = bytearray()
+buf += b"\x00\x00"
+buf += b"\x00\x05hello"
+buf
+len(buf)
+del buf[:4]
+buf
+bytes(buf)
+view = memoryview(b"hello world")
+view[6:]
+bytes(view[6:])
+view[6:].tobytes()

@@ -1,0 +1,8 @@
+import uuid
+job_id = uuid.uuid4()
+job_id
+job_id.hex
+len(job_id.hex)
+uuid.uuid4().hex == uuid.uuid4().hex
+uuid.UUID(job_id.hex) == job_id
+job_id.version

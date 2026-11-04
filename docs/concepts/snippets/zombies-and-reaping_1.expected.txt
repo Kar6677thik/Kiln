@@ -1,0 +1,5 @@
+after the child exited, its state is: Z
+waitpid returned the child? True; exit code 7
+after reaping, its state is: gone (no /proc entry)
+waitpid(-1, WNOHANG) while a child is still running: (0, 0)
+waitpid with no children left: ChildProcessError (No child processes)

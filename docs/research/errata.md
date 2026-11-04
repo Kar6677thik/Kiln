@@ -155,3 +155,11 @@
 - **Evidence:** `uv python list --all-versions` and `uv python install 3.15 3.15t` in the K0 setup log ([tours/K0.md](../tours/K0.md#appendix-setup-log)).
 - **Affects:** K0 (records only).
 - **Status:** ✅ corrected
+
+## E-18: systemd stops a whole scope after an OOM kill (OOMPolicy=stop)
+- **Spec claim:** spec/07 §6.1 ran the OOM lab with `systemd-run --user --scope -p MemoryMax=512M -p MemorySwapMax=0`.
+- **Correction:** systemd's default `OOMPolicy=stop` makes it stop the entire unit, sending SIGTERM to every process (including the Kiln master), right after the kernel OOM-kills any one of them. The first K1 OOM run showed the master receiving SIGTERM within milliseconds of the worker's OOM kill. Adding `-p OOMPolicy=continue` keeps the rest of the scope alive.
+- **Evidence:** K1 lab (a), log `signal_received signal=SIGTERM` right after `worker_died … oom_confirmed=true`. See [labs/K1-supervisor.md](../labs/K1-supervisor.md).
+- **Real-world lesson:** container runtimes and systemd services make the same choice. "The OOM killer killed one process" can turn into "the platform stopped everything", which is another way an operator ends up seeing only "worker lost".
+- **Affects:** K1 (fixed in `labs/k1/k1_lab.py` and spec/07 §6.1).
+- **Status:** ✅ corrected

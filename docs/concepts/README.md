@@ -10,21 +10,21 @@
 | 3 | [`what-is-a-process`](what-is-a-process.md) | K0 | ✍️ |
 | 4 | [`files-and-file-descriptors`](files-and-file-descriptors.md) | K0 | ✍️ |
 | 5 | [`what-is-a-server`](what-is-a-server.md) | K0 | ✍️ |
-| 6 | `fork` | K1 | ⏳ |
-| 7 | `fork-and-threads` | K1 | ⏳ |
-| 8 | `signals` | K1 | ⏳ |
-| 9 | `exit-status` | K1 | ⏳ |
-| 10 | `zombies-and-reaping` | K1 | ⏳ |
-| 11 | `sockets-and-socketpairs` | K1 | ⏳ |
-| 12 | `framing` | K1 | ⏳ |
-| 13 | `non-blocking-io-and-selectors` | K1 | ⏳ |
-| 14 | `event-loops` (selectors part; K5 adds the asyncio part) | K1, K5 | ⏳ |
-| 15 | `state-machines` | K1 | ⏳ |
-| 16 | `delivery-semantics` | K1 | ⏳ |
-| 17 | `memory-metrics` (RSS; K3 extends with PSS/USS) | K1, K3 | ⏳ |
-| 18 | `cgroups-and-oom-killer` | K1 | ⏳ |
-| 19 | `observability` | K1 | ⏳ |
-| 20 | `testing-multiprocess-code` | K1 | ⏳ |
+| 6 | [`fork`](fork.md) | K1 | ✍️ |
+| 7 | [`fork-and-threads`](fork-and-threads.md) | K1 | ✍️ |
+| 8 | [`signals`](signals.md) | K1 | ✍️ |
+| 9 | [`exit-status`](exit-status.md) | K1 | ✍️ |
+| 10 | [`zombies-and-reaping`](zombies-and-reaping.md) | K1 | ✍️ |
+| 11 | [`sockets-and-socketpairs`](sockets-and-socketpairs.md) | K1 | ✍️ |
+| 12 | [`framing`](framing.md) | K1 | ✍️ |
+| 13 | [`non-blocking-io-and-selectors`](non-blocking-io-and-selectors.md) | K1 | ✍️ |
+| 14 | [`event-loops`](event-loops.md) (selectors part; K5 adds the asyncio part) | K1, K5 | ✍️ |
+| 15 | [`state-machines`](state-machines.md) | K1 | ✍️ |
+| 16 | [`delivery-semantics`](delivery-semantics.md) | K1 | ✍️ |
+| 17 | [`memory-metrics`](memory-metrics.md) (RSS; K3 extends with PSS/USS) | K1, K3 | ✍️ |
+| 18 | [`cgroups-and-oom-killer`](cgroups-and-oom-killer.md) | K1 | ✍️ |
+| 19 | `observability` (deferred: the logging format is taught in spec/06 and python/logging-basics for now) | K1 | ⏳ |
+| 20 | `testing-multiprocess-code` (deferred: the code tour's stop on tests/support/kiln_helpers.py covers it for now) | K1 | ⏳ |
 | 21 | `start-methods` | K2 | ⏳ |
 | 22 | `pickling` | K2 | ⏳ |
 | 23 | `main-module` | K2 | ⏳ |

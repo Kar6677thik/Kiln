@@ -1,0 +1,12 @@
+import importlib, sys
+module = importlib.import_module("json")
+module
+module.dumps([1, 2])
+importlib.import_module("json") is module
+"json" in sys.modules
+spec = "json:dumps"
+module_name, _, attribute = spec.partition(":")
+module_name, attribute
+getattr(importlib.import_module(module_name), attribute)
+importlib.import_module("no_such_module_kiln")
+getattr(module, "no_such_function")

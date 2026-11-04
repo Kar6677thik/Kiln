@@ -1,0 +1,6 @@
+listening on 127.0.0.1 port chosen by the kernel: True
+accepted a connection from 127.0.0.1
+server received: b'submit labs.echo'
+client received: b'ok'
+after the client closes, recv returns: b''
+connect again: ConnectionRefusedError

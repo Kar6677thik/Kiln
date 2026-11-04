@@ -1,0 +1,22 @@
+from dataclasses import dataclass, replace
+@dataclass(frozen=True, slots=True)
+class WorkerConfig:
+    workers: int = 4
+    max_jobs: int = 0
+
+cfg = WorkerConfig()
+cfg
+cfg.workers = 8
+cfg2 = replace(cfg, workers=8)
+cfg2
+cfg
+cfg.typo = 1
+@dataclass
+class Loose:
+    workers: int = 4
+
+loose = Loose()
+loose.wrokers = 8
+loose
+hasattr(cfg, "__dict__"), hasattr(loose, "__dict__")
+{cfg: "usable as a dict key"}

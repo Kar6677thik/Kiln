@@ -1,0 +1,2 @@
+child:  threads in me = 1, lock acquired? False
+parent: lock acquired after the holder released it? True

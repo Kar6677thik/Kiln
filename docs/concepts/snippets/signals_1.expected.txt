@@ -1,0 +1,3 @@
+handler saw: ['SIGUSR1']
+SIGUSR2 was ignored; we are still running
+child killed by: SIGTERM

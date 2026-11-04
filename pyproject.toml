@@ -71,6 +71,8 @@ ignore = [
   "RUF002",    # WHY: same, inside docstrings
   "RUF003",    # WHY: same, inside comments (e.g. "→" arrows)
   "RUF005",    # WHY: `a + b` list concatenation is plainer for beginners than `[*a, *b]` (code-style §1)
+  "S101",      # WHY: code-style §4 allows assert for invariants (each has an INVARIANT: comment)
+  "SIM105",    # WHY: an explicit try/except shows which errno is expected (code-style §4)
   "SIM108",    # WHY: code-style §1 prefers an explicit if/else block over a conditional expression
 ]
 
@@ -105,6 +107,8 @@ warn_unreachable = true
 # ---------------------------------------------------------------------------------------------
 [tool.pytest.ini_options]
 testpaths = ["tests", "src/kiln"]
+# WHY: test helpers in tests/support/ can be imported by name (import kiln_helpers).
+pythonpath = ["tests/support"]
 # --import-mode=importlib: import test files without adding their folders to sys.path, so the
 #   installed package (src layout) is what gets tested.
 # --doctest-modules: also run the ">>>" examples inside src/kiln docstrings.

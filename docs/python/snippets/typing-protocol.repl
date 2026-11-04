@@ -1,0 +1,21 @@
+from typing import Protocol
+class Executor(Protocol):
+    capacity: int
+    def inflight(self) -> int: ...
+
+class SyncExecutor:
+    def __init__(self) -> None:
+        self.capacity = 1
+        self.running = 0
+    def inflight(self) -> int:
+        return self.running
+
+def describe(executor: Executor) -> str:
+    return f"{executor.inflight()}/{executor.capacity} slots busy"
+
+describe(SyncExecutor())
+issubclass(SyncExecutor, Executor)
+from collections.abc import Callable
+on_done: Callable[[dict], None] = print
+on_done({"ok": True})
+Executor()

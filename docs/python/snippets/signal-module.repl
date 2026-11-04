@@ -1,0 +1,16 @@
+import os, signal
+signal.SIGTERM
+int(signal.SIGTERM)
+signal.Signals(15)
+signal.Signals(9).name
+received = []
+def on_term(signum, frame):
+    received.append(signal.Signals(signum).name)
+
+old = signal.signal(signal.SIGTERM, on_term)
+os.kill(os.getpid(), signal.SIGTERM)
+received
+signal.signal(signal.SIGINT, signal.SIG_IGN)
+signal.getsignal(signal.SIGINT)
+signal.signal(signal.SIGKILL, on_term)
+signal.signal(signal.SIGTERM, old)

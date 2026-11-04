@@ -1,0 +1,141 @@
+{
+  "config": {},
+  "duration_s": 41.05,
+  "experiment": "reload",
+  "git": {
+    "commit": "1fbd98f",
+    "dirty": true
+  },
+  "host": {
+    "cpu_model": "Intel(R) Core(TM) Ultra 5 225H",
+    "cpus": 14,
+    "kernel": "6.6.87.2-microsoft-standard-WSL2",
+    "mem_total_bytes": 7751778304,
+    "notes": "source=9p",
+    "pinned_cpus": null,
+    "wsl": true
+  },
+  "interpreter": {
+    "build": "gil",
+    "executable": "/home/Megatron/.cache/kiln/venvs/py3.15/bin/python",
+    "gil_enabled_at_end": true,
+    "implementation": "cpython",
+    "jit_enabled": false,
+    "version": "3.15.1"
+  },
+  "metrics": {
+    "jobs_cancelled": {
+      "unit": "count",
+      "value": 0
+    },
+    "jobs_failed": {
+      "unit": "count",
+      "value": 0
+    },
+    "jobs_lost": {
+      "unit": "count",
+      "value": 12
+    },
+    "jobs_succeeded": {
+      "unit": "count",
+      "value": 28
+    },
+    "jobs_timed_out": {
+      "unit": "count",
+      "value": 0
+    },
+    "latency": {
+      "samples": [
+        3005.577,
+        3005.774,
+        5017.716,
+        5017.851,
+        7017.501,
+        7017.58,
+        9015.608,
+        9015.885,
+        8013.836,
+        8013.821,
+        8006.679,
+        8006.66,
+        8006.808,
+        8007.033,
+        8007.886,
+        8007.784,
+        8009.583,
+        8013.155,
+        8007.397,
+        8007.567,
+        8012.476,
+        8012.288,
+        8010.618,
+        8010.883,
+        8010.236,
+        8008.284,
+        8010.812,
+        8012.092,
+        8006.667,
+        8006.781,
+        8006.538,
+        8006.722,
+        8002.441,
+        8000.716,
+        8001.839,
+        8000.305,
+        8002.769,
+        8002.546,
+        8007.916,
+        8009.162
+      ],
+      "summary": {
+        "max": 9015.885,
+        "p50": 8007.033,
+        "p90": 8013.155,
+        "p99": 9015.885
+      },
+      "unit": "ms"
+    },
+    "master_cpu": {
+      "unit": "s",
+      "value": 0.23
+    },
+    "queue_full_retries": {
+      "unit": "count",
+      "value": 0
+    },
+    "reloads": {
+      "unit": "count",
+      "value": 20
+    },
+    "submit_errors": {
+      "unit": "count",
+      "value": 0
+    },
+    "throughput": {
+      "unit": "jobs/s",
+      "value": 1.0
+    },
+    "throughput_overall": {
+      "unit": "jobs/s",
+      "value": 1.0
+    }
+  },
+  "milestone": "K1",
+  "notes": "",
+  "params": {
+    "concurrency": 8,
+    "jobs": 40,
+    "kwargs": {
+      "ms": 3000
+    },
+    "mode": "closed",
+    "rate": null,
+    "reload_every_s": 2.0,
+    "task": "labs.sleep"
+  },
+  "repeat_index": 0,
+  "run_id": "20261104T082258Z-py3.15-4c13",
+  "schema_version": 1,
+  "started_at": "2026-11-04T08:22:58.462Z",
+  "variant": "negative-control-grace-1s"
+}

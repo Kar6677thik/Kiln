@@ -1,0 +1,15 @@
+import struct
+struct.pack("!I", 5)
+struct.pack("!I", 258)
+struct.pack("<I", 258)
+struct.unpack("!I", b"\x00\x00\x01\x02")
+HEADER = struct.Struct("!I")
+HEADER.size
+frame = HEADER.pack(5) + b"hello"
+frame
+(length,) = HEADER.unpack(frame[:4])
+length
+frame[4:4 + length]
+struct.pack("!I", -1)
+struct.pack("!I", 2**32)
+struct.unpack("!I", b"\x00\x01")

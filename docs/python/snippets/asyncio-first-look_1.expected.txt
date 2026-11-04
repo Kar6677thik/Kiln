@@ -1,0 +1,2 @@
+one_after_another  ['a', 'b', 'c']  about <NUM> s
+all_together       ['a', 'b', 'c']  about <NUM> s

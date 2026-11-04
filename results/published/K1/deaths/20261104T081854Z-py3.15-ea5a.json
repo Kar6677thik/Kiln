@@ -1,0 +1,41 @@
+{
+  "config": {},
+  "experiment": "deaths",
+  "git": {
+    "commit": "1fbd98f",
+    "dirty": true
+  },
+  "host": {
+    "cpu_model": "Intel(R) Core(TM) Ultra 5 225H",
+    "cpus": 14,
+    "kernel": "6.6.87.2-microsoft-standard-WSL2",
+    "mem_total_bytes": 7751778304,
+    "notes": "source=9p",
+    "pinned_cpus": null,
+    "wsl": true
+  },
+  "interpreter": {
+    "build": "gil",
+    "executable": "/home/Megatron/.cache/kiln/venvs/py3.15/bin/python",
+    "gil_enabled_at_end": true,
+    "implementation": "cpython",
+    "jit_enabled": false,
+    "version": "3.15.1"
+  },
+  "metrics": {
+    "modes_tested": {
+      "unit": "count",
+      "value": 4
+    }
+  },
+  "milestone": "K1",
+  "notes": "[{\"how\": \"exit1\", \"classified\": \"crashed\", \"exit_code\": \"1\", \"signal\": \"null\", \"suspected_oom\": \"false\", \"oom_confirmed\": \"false\", \"oom_evidence\": \"\", \"job_state\": \"LOST\"}, {\"how\": \"segv\", \"classified\": \"killed\", \"exit_code\": \"null\", \"signal\": \"SIGSEGV\", \"suspected_oom\": \"false\", \"oom_confirmed\": \"false\", \"oom_evidence\": \"\", \"job_state\": \"LOST\"}, {\"how\": \"abort\", \"classified\": \"killed\", \"exit_code\": \"null\", \"signal\": \"SIGABRT\", \"suspected_oom\": \"false\", \"oom_confirmed\": \"false\", \"oom_evidence\": \"\", \"job_state\": \"LOST\"}, {\"how\": \"sigkill_self\", \"classified\": \"killed\", \"exit_code\": \"null\", \"signal\": \"SIGKILL\", \"suspected_oom\": \"true\", \"oom_confirmed\": \"false\", \"oom_evidence\": \"cgroup memory.events oom_kill unchanged (0)\", \"job_state\": \"LOST\"}]",
+  "params": {
+    "workers": 2
+  },
+  "repeat_index": 0,
+  "run_id": "20261104T081854Z-py3.15-ea5a",
+  "schema_version": 1,
+  "started_at": "2026-11-04T08:18:54.484Z",
+  "variant": "crash-modes"
+}

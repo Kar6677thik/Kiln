@@ -1,0 +1,2 @@
+watched: ['client-1', 'worker-0', 'worker-1']
+readable: ['client-1', 'worker-1']

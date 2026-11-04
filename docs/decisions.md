@@ -41,6 +41,8 @@
 | [030](#adr-030) | `labs.hold_gil` fault task, and the `kiln.client` module | Accepted |
 | [031](#adr-031) | Master connection limits are constants, not config | Accepted |
 | [032](#adr-032) | K0 tooling details (implementation choices) | Accepted (implementer, pending learner review) |
+| [033](#adr-033) | K1 import-boundary additions | Accepted (implementer, pending learner review) |
+| [034](#adr-034) | K1 implementation details | Accepted (implementer, pending learner review) |
 
 ---
 
@@ -260,3 +262,31 @@
      - Links from *planning* documents (spec, milestones, ADRs, templates, research, standards) may point at files a later milestone creates. Links from *learning* documents may not.
      - `tests/unit/test_check_docs.py` is skipped by the tag and doc-mention scans, because its string literals are deliberately broken examples.
 - **Consequences:** None changes user-visible behaviour or a learning objective. If the learner disagrees with any of them, each is a small, local change.
+
+<a id="adr-033"></a>
+## ADR-033: K1 import-boundary additions (amends the K0 §5.8 allow-table)
+- **Status:** Accepted (implementer, pending learner review)
+- **Context:** Writing K1 showed four imports that the table didn't anticipate. All four are one-way, and none lets the master reach worker or user code.
+- **Decision:** Allow these imports:
+  - `kiln.app → kiln.config`: the manifest fills in defaults from `JobsConfig`.
+  - `kiln.labs → kiln.app`: `register()` adds the lab tasks to an `App`.
+  - `kiln.launch → kiln.app`: the fork launcher passes the preloaded `App` through to the child.
+  - `kiln.master → kiln.__init__`: used only for `__version__` in logs and stats.
+- **Unchanged:** the master still never imports `kiln.worker` (the boundary test checks this), and `kiln.protocol` imports only `kiln.errors`.
+
+<a id="adr-034"></a>
+## ADR-034: K1 implementation details
+- **Status:** Accepted (implementer, pending learner review)
+- **Decisions:**
+  1. **`kiln/worker/channel.py` (not in the module map).** The worker's thread-safe socket wrapper sits in its own small module. Both `main.py` and `heartbeat.py` use it.
+  2. **Killed workers get no new jobs.** A worker the master is killing (`kill_sent` set, for example after a job timeout) is skipped by the dispatcher, even while its state is still READY. Otherwise a retried job could be sent to a worker that is about to die, and lost. A test found this.
+  3. **`kiln serve` adds the current folder to `sys.path`,** as gunicorn does, so that `examples.demo:app` imports from the project folder.
+  4. **Test helpers live in `tests/support/kiln_helpers.py`.** pytest's `pythonpath` puts them on the import path, because with `--import-mode=importlib` tests can't import from a `conftest.py`.
+  5. **Retirement handshake.** A worker that decides to leave (because of `max_jobs`, `max_rss` or SIGTERM) sends `retiring` and **keeps serving** until the master answers `shutdown`.
+     - Why: if it exited right after announcing, a `run` the master had already sent would be lost.
+     - Why it works: messages on one channel arrive in order, so every `run` sent before the `shutdown` gets served first.
+     - It was found by `test_max_jobs_with_jitter_recycles_between_10_and_15`.
+  6. **Drain before resolving a death.** Before marking a dead worker's jobs lost, the master reads every message still waiting in its channel.
+     - Why: the worker may have sent a result just before exiting, and the loop may see SIGCHLD before reading that socket.
+     - It was found by `test_reload_under_load_drops_nothing`, failing about 1 run in 3.
+  7. **`labs.raise` is implemented by a function named `fail`.** `raise` is a Python keyword, so it can't be a function name. The task name stays `labs.raise`.

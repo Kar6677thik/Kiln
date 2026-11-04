@@ -1,0 +1,13 @@
+import time
+time.time()
+time.monotonic()
+time.perf_counter()
+start = time.monotonic()
+time.sleep(0.25)
+elapsed = time.monotonic() - start
+round(elapsed, 2)
+deadline = time.monotonic() + 30.0
+deadline - time.monotonic() > 29
+time.get_clock_info("time").adjustable
+time.get_clock_info("monotonic").adjustable
+time.get_clock_info("perf_counter").resolution

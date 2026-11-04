@@ -1,0 +1,3 @@
+exit 0   raw status=0x0000  exited, code 0        waitstatus_to_exitcode=0
+exit 3   raw status=0x0300  exited, code 3        waitstatus_to_exitcode=3
+SIGKILL  raw status=0x0009  killed by SIGKILL     waitstatus_to_exitcode=-9

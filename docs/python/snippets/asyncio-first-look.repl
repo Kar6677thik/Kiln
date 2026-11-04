@@ -1,0 +1,13 @@
+import asyncio
+async def greet(name):
+    await asyncio.sleep(0.1)
+    return f"hello {name}"
+
+coro = greet("kiln")
+coro
+coro.close()
+asyncio.run(greet("kiln"))
+async def main():
+    return await asyncio.gather(greet("a"), greet("b"), greet("c"))
+
+asyncio.run(main())

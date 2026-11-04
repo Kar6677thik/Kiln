@@ -1,0 +1,3 @@
+bytes written to the wakeup socket: [10, 12, 10]
+as signal names: ['SIGUSR1', 'SIGUSR2', 'SIGUSR1']
+the Python handlers recorded: ['SIGUSR1', 'SIGUSR2', 'SIGUSR1']

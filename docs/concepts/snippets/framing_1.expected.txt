@@ -1,0 +1,5 @@
+one recv() got: b'{"n":1}{"n":2}'
+payload is 16 bytes; header bytes = [0, 0, 0, 16]
+fed 20 single bytes; a message came out only at byte [20]
+decoded: [{'type': 'ping'}]
+two frames glued together: [{'type': 'ping'}, {'type': 'ping'}]

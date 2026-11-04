@@ -1,0 +1,20 @@
+import selectors, socket
+sel = selectors.DefaultSelector()
+sel
+a, b = socket.socketpair()
+b.setblocking(False)
+key = sel.register(b, selectors.EVENT_READ, data="worker-1 channel")
+sel.select(timeout=0)
+a.send(b"ping")
+events = sel.select(timeout=1)
+for key, mask in events:
+    print(key.data, mask == selectors.EVENT_READ, key.fileobj.recv(100))
+
+key = sel.modify(b, selectors.EVENT_READ | selectors.EVENT_WRITE, data="now also writable?")
+for key, mask in sel.select(timeout=0):
+    print(key.data, bool(mask & selectors.EVENT_WRITE), bool(mask & selectors.EVENT_READ))
+
+key = sel.unregister(b)
+sel.close()
+a.close()
+b.close()

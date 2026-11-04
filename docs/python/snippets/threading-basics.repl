@@ -1,0 +1,21 @@
+import threading, time
+ticks = []
+def heartbeat(stop):
+    while not stop.is_set():
+        ticks.append(time.monotonic())
+        stop.wait(0.05)
+
+stop = threading.Event()
+t = threading.Thread(target=heartbeat, args=(stop,), daemon=True, name="heartbeat")
+t.start()
+time.sleep(0.3)
+threading.active_count()
+stop.set()
+t.join()
+t.is_alive()
+len(ticks) >= 4
+lock = threading.Lock()
+with lock:
+    print("only one thread at a time in here")
+
+lock.locked()

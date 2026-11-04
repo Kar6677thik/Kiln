@@ -1,0 +1,16 @@
+from collections import deque
+queue = deque()
+queue.append("job-1")
+queue.append("job-2")
+queue.append("job-3")
+queue
+queue.popleft()
+queue
+queue.appendleft("job-1")
+queue
+len(queue)
+queue[0]
+queue.remove("job-2")
+queue
+empty = deque()
+empty.popleft()

@@ -1,0 +1,20 @@
+import os
+os.getpid() > 1
+os.environ.get("HOME")
+os.environ.get("KILN_NOT_SET", "default")
+pid = os.fork()
+if pid == 0:
+    os._exit(7)
+
+done_pid, status = os.waitpid(pid, 0)
+done_pid == pid
+os.WIFEXITED(status), os.WEXITSTATUS(status)
+os.waitstatus_to_exitcode(status)
+pid = os.fork()
+if pid == 0:
+    os.kill(os.getpid(), 9)
+
+_, status = os.waitpid(pid, 0)
+os.WIFSIGNALED(status), os.WTERMSIG(status)
+os.waitstatus_to_exitcode(status)
+os.waitpid(-1, os.WNOHANG)

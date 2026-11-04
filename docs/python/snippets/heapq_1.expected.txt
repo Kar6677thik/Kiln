@@ -1,0 +1,4 @@
+next deadline: 2.0
+fired at t=6: [(5.0, 'respawn')]
+fired at t=11: [(10.0, 'job_timeout')]
+left: []

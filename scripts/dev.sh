@@ -96,22 +96,26 @@ uvrun() {
   "$UV" run --quiet "$@"
 }
 
+# GOTCHA: `set -e` is silently switched OFF inside a function that is called as part of an
+# `a && b` chain (as `check` does below). So every step here ends with `|| return 1`, or a
+# failing ruff would be ignored and `check` would carry on. (Found in K1: lint failed, check
+# still said "all green".)
 cmd_lint() {
   echo "== ruff check (lint) =="
-  uvrun ruff check .
+  uvrun ruff check . || return 1
   echo "== ruff format --check (formatting) =="
-  uvrun ruff format --check .
+  uvrun ruff format --check . || return 1
   # WHY: shellcheck finds classic shell-script bugs (unquoted variables...). It is optional
   # (sudo apt install shellcheck), so only run it when it's installed.
   if command -v shellcheck >/dev/null 2>&1; then
     echo "== shellcheck =="
-    shellcheck scripts/*.sh
+    shellcheck scripts/*.sh || return 1
   fi
 }
 
 cmd_typecheck() {
   echo "== mypy (core, checked at the Python 3.13 floor) =="
-  uvrun mypy
+  uvrun mypy || return 1
   # WHY: modules that use 3.14+/3.15 syntax are checked separately (spec/08 §2.4). The list is
   # empty until K4/K9 create them, so only run the second pass when one exists.
   local gated=()
@@ -120,7 +124,7 @@ cmd_typecheck() {
   done
   if (( ${#gated[@]} > 0 )); then
     echo "== mypy (gated modules, Python 3.15) =="
-    uvrun mypy --python-version 3.15 "${gated[@]}"
+    uvrun mypy --python-version 3.15 "${gated[@]}" || return 1
   fi
 }
 
@@ -197,7 +201,12 @@ case "$command" in
   coverage)       cmd_coverage "$@" ;;
   bench-snapshot) "$REPO_ROOT/scripts/bench-snapshot.sh" ;;
   run)            uvrun python "$@" ;;
-  lab|serve-demo) echo "dev.sh $command: available from milestone K1" >&2; exit 2 ;;
+  # A lab id is "k<N>-<experiment>", e.g. k1-oom: run labs/k1/k1_lab.py oom.
+  # ${1%%-*} keeps the text before the first "-"; ${1#*-} keeps the text after it.
+  lab)            [[ $# -ge 1 ]] || { echo "usage: dev.sh lab k1-oom [args]" >&2; exit 2; }
+                  milestone="${1%%-*}"; experiment="${1#*-}"; shift
+                  uvrun python "labs/$milestone/${milestone}_lab.py" "$experiment" "$@" ;;
+  serve-demo)     uvrun kiln serve examples.demo:app --labs "$@" ;;
   clean)          cmd_clean ;;
   *)              echo "dev.sh: unknown command '$command'" >&2; usage >&2; exit 2 ;;
 esac

@@ -1,0 +1,13 @@
+import json
+json.dumps({"type": "submit", "args": [2, 3]})
+json.dumps({"type": "submit", "args": [2, 3]}, separators=(",", ":"))
+json.dumps({"name": "café"})
+json.dumps({"name": "café"}, ensure_ascii=False)
+json.dumps((1, 2))
+json.loads(json.dumps({1: "one"}))
+json.loads('{"ok": true, "value": null}')
+json.dumps(float("nan"))
+json.dumps(float("nan"), allow_nan=False)
+json.loads("NaN")
+json.dumps({1, 2})
+json.loads("[1, 2")

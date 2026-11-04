@@ -25,3 +25,9 @@ MILESTONE
 # version string; tools and humans read it as `kiln.__version__`.
 # WHY: keep this in sync with `version` in pyproject.toml (a test checks they match).
 __version__ = "0.1.0"
+
+# The public task API (docs/spec/03-jobs-and-tasks.md §2): `app = kiln.App("demo")`.
+# PY: re-exporting a name here lets users write kiln.App instead of kiln.app.App.
+from kiln.app import App
+
+__all__ = ["App", "__version__"]

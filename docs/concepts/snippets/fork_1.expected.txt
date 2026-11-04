@@ -1,0 +1,4 @@
+before fork: this line sits in the output buffer, not yet written
+child:  fork() returned 0, my counter = 11
+before fork: this line sits in the output buffer, not yet written
+parent: fork() returned a pid > 0: True, my counter = 10

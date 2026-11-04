@@ -1,0 +1,16 @@
+import socket
+a, b = socket.socketpair()
+a.send(b"hello")
+b.recv(1024)
+a.send(b"ab")
+a.send(b"cd")
+b.recv(1024)
+b.setblocking(False)
+try:
+    b.recv(1024)
+except BlockingIOError as error:
+    print("no data yet:", error)
+
+a.close()
+b.recv(1024)
+b.close()

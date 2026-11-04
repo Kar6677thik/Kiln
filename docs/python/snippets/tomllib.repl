@@ -1,0 +1,20 @@
+import tomllib
+text = """
+[master]
+workers = 4
+bind = "127.0.0.1:7340"
+
+[worker]
+max_rss_mb = 512
+heartbeat_interval_s = 1.0
+
+[app]
+pythonpath = ["src", "examples"]
+preload = true
+"""
+config = tomllib.loads(text)
+config
+type(config["worker"]["heartbeat_interval_s"])
+config["app"]["preload"]
+tomllib.loads('workers = "four"')["workers"]
+tomllib.loads("workers = ")

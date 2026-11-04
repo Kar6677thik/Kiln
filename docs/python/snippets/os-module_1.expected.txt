@@ -1,0 +1,4 @@
+parent: my pid is <PID>
+child: my pid is <PID>, my parent is <PID>
+parent: child <PID> finished
+parent: exited normally? True, exit code 3

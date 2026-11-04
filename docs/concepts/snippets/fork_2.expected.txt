@@ -1,0 +1,5 @@
+  atexit handler ran in: child that called sys.exit()
+child using sys.exit() has exited
+child using os._exit() has exited
+parent is about to exit normally
+  atexit handler ran in: parent

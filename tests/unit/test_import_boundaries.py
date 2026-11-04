@@ -22,14 +22,20 @@ ALLOWED: dict[str, set[str]] = {
     "kiln.logsetup": set(),
     "kiln.protocol": set(),
     "kiln.config": set(),
-    "kiln.app": set(),
+    "kiln.app": {"kiln.config"},  # ADR-033: manifest defaults come from JobsConfig
     "kiln.memory": set(),
     "kiln.forkcheck": set(),
     "kiln.native": set(),
-    "kiln.labs": {"kiln.memory"},
+    "kiln.labs": {"kiln.memory", "kiln.app"},  # ADR-033: register() adds tasks to an App
     "kiln.client": {"kiln.protocol", "kiln.config"},
     "kiln.worker": {"kiln.protocol", "kiln.config", "kiln.app", "kiln.memory", "kiln.labs"},
-    "kiln.launch": {"kiln.protocol", "kiln.config", "kiln.memory", "kiln.worker"},
+    "kiln.launch": {
+        "kiln.protocol",
+        "kiln.config",
+        "kiln.memory",
+        "kiln.worker",
+        "kiln.app",
+    },  # ADR-033
     "kiln.master": {
         "kiln.protocol",
         "kiln.config",
@@ -37,6 +43,7 @@ ALLOWED: dict[str, set[str]] = {
         "kiln.memory",
         "kiln.launch",
         "kiln.labs",
+        "kiln.__init__",  # ADR-033: only for __version__
     },
     "kiln.gateway": {"kiln.protocol", "kiln.config", "kiln.bench.records"},
     "kiln.bench": {"kiln.protocol", "kiln.config", "kiln.client"},

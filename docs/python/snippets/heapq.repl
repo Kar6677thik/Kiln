@@ -1,0 +1,15 @@
+import heapq
+timers = []
+heapq.heappush(timers, (30.0, 1, "job_timeout"))
+heapq.heappush(timers, (5.0, 2, "heartbeat_check"))
+heapq.heappush(timers, (12.5, 3, "respawn"))
+timers[0]
+heapq.heappop(timers)
+heapq.heappop(timers)
+timers
+cancelled = {3}
+deadline, timer_id, kind = heapq.heappop(timers)
+timer_id in cancelled
+heapq.heappush(timers, (7.0, 4, "a"))
+heapq.heappush(timers, (7.0, 5, "b"))
+heapq.heappop(timers)
