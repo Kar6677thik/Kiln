@@ -4,7 +4,13 @@ from pathlib import Path
 
 import pytest
 
-from kiln.memory.procfs import ProcessGone, children_of, parse_smaps_rollup, read_smaps_rollup
+from kiln.memory.procfs import (
+    ProcessGone,
+    children_of,
+    parse_smaps_rollup,
+    read_cpu_times,
+    read_smaps_rollup,
+)
 
 pytestmark = pytest.mark.unit
 
@@ -88,3 +94,14 @@ def test_children_of_falls_back_to_scanning_stat(tmp_path: Path) -> None:
         (tmp_path / str(pid)).mkdir()
         (tmp_path / str(pid) / "stat").write_text(f"{pid} (my (odd) name) S {ppid} 1 1 0")
     assert children_of(20, proc_root=tmp_path) == [21, 22]
+
+
+def test_read_cpu_times_adds_utime_and_stime(tmp_path: Path) -> None:
+    """Fields 14 and 15 of /proc/<pid>/stat, converted from clock ticks to seconds."""
+    import os
+
+    ticks = os.sysconf("SC_CLK_TCK")
+    (tmp_path / "9").mkdir()
+    fields = ["S", "1", "1", "1", "0", "-1", "0", "0", "0", "0", "0", str(3 * ticks), str(ticks)]
+    (tmp_path / "9" / "stat").write_text("9 (a (b) c) " + " ".join(fields) + " 0 0")
+    assert read_cpu_times(9, proc_root=tmp_path) == 4.0

@@ -10,8 +10,8 @@
 | K0 | Foundations: environment, tooling, first primers | [K0](K0-foundations.md) | ✅ done | `milestone/k0-foundations` | — (setup log: appendix of `tours/K0.md`) | [tour](../tours/K0.md) |
 | K1 | Supervisor: master/worker, signals, queue, reload, recycling, OOM detection | [K1](K1-supervisor.md) | ✅ done | `milestone/k1-supervisor` | `K1-supervisor.md` | `K1.md` |
 | K2 | Start methods + ★ fork-assumption checker | [K2](K2-start-methods-forkcheck.md) | ✅ done | `milestone/k2-start-methods` | `K2-forkcheck.md` | `K2.md` |
-| K3 | Copy-on-write lab (Instagram) | [K3](K3-copy-on-write.md) | 👀 awaiting learner review | `milestone/k3-cow` | `K3-cow.md` | `K3.md` |
-| K4 | Concurrency backends + free-threading | [K4](K4-concurrency-backends.md) | 📝 specified | `milestone/k4-concurrency` | `K4-concurrency.md` | `K4.md` |
+| K3 | Copy-on-write lab (Instagram) | [K3](K3-copy-on-write.md) | ✅ done | `milestone/k3-cow` | `K3-cow.md` | `K3.md` |
+| K4 | Concurrency backends + free-threading | [K4](K4-concurrency-backends.md) | 👀 awaiting learner review | `milestone/k4-concurrency` | `K4-concurrency.md` | `K4.md` |
 | K5 | Async gateway + event-loop watchdog | [K5](K5-gateway-watchdog.md) | 📝 specified | `milestone/k5-gateway` | `K5-blocked-loop.md` | `K5.md` |
 | K6 | Leak lab | [K6](K6-leak-lab.md) | 📝 specified | `milestone/k6-leaks` | `K6-leaks.md` | `K6.md` |
 | K7 | GC regression replay (3.14 incremental GC) | [K7](K7-gc-regression.md) | 📝 specified | `milestone/k7-gc` | `K7-gc-regression.md` | `K7.md` |

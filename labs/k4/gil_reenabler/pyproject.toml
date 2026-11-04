@@ -1,0 +1,34 @@
+# =============================================================================================
+# kiln-gil-labs: two ~40-line C extensions for the K4 GIL lab (ADR-015).
+#
+# WHY THIS FILE EXISTS
+#   A separate, tiny Python project so the C code builds with each interpreter's own headers:
+#   `KILN_PY=3.15t ./scripts/dev.sh sync --group lab-k4` makes uv build it inside that
+#   interpreter's venv, producing a correctly tagged .so (cpython-315t vs cpython-315).
+#   It needs a C compiler: `sudo apt install build-essential`.
+#
+# READ FIRST
+#   README.md (next to this file), docs/concepts/c-extensions.md
+# =============================================================================================
+
+[build-system]
+# setuptools knows how to compile C extensions; uv installs it in an isolated build env.
+requires = ["setuptools>=75"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "kiln-gil-labs"
+version = "0.1.0"
+description = "LAB: one C extension that needs the GIL, and one that doesn't (Kiln K4)"
+requires-python = ">=3.13"
+
+[tool.setuptools]
+# The two extensions: the module name, and the C file it is compiled from.
+ext-modules = [
+  { name = "kiln_gil_labs.with_gil", sources = ["with_gil.c"] },
+  { name = "kiln_gil_labs.without_gil", sources = ["without_gil.c"] },
+]
+
+[tool.setuptools.packages.find]
+# The pure-Python part of the package (only __init__.py) lives in src/.
+where = ["src"]

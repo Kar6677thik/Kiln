@@ -16,15 +16,19 @@ READ FIRST
 
 MILESTONE
     Introduced in K1 (echo, sleep, burn_cpu, alloc, crash, raise, hold_gil). K2 adds random_probe.
-    K3 adds touch_preloaded, churn, gc_collect and gc_stats.
+    K3 adds touch_preloaded, churn, gc_collect and gc_stats. K4 adds async_sleep, block_loop,
+    thread_name and interp_probe.
 """
 
+import asyncio
 import ctypes
 import gc
+import importlib
 import os
 import random
 import re
 import signal
+import threading
 import time
 
 from kiln.app import App
@@ -63,28 +67,35 @@ def sleep(ms: float) -> float:
     return (time.monotonic() - started) * 1000
 
 
-def burn_cpu(ms: float) -> int:
-    """Keep the CPU busy with pure-Python arithmetic for about `ms` milliseconds.
+def burn_cpu(ms: float = 0, work: int = 0) -> int:
+    """Keep the CPU busy with pure-Python arithmetic, for `ms` of thread CPU or `work` units.
 
     Why:
         A CPU-bound stand-in. Pure Python means the interpreter still switches to other
         threads every few milliseconds (sys.getswitchinterval()), so heartbeats continue:
         the contrast with hold_gil in the K1 heartbeat lab.
 
+        GOTCHA (found in K4): the first version stopped on time.process_time(), which counts
+        the CPU of *every thread in the process*. With 8 threads really running in parallel
+        on 3.15t, each job's clock ran 8× too fast and it did 1/8 of the work. thread_time()
+        counts only the calling thread. For comparing builds, `work` (a fixed number of
+        1,000-step units) is better still: the same work on both, so a slower build shows.
+
     Args:
-        ms: roughly how long to run (process CPU time).
+        ms: run for this much CPU time of the calling thread (used when work is 0).
+        work: run exactly this many units instead (about 1,100 units ≈ 20 ms on 3.15).
 
     Returns:
-        How many loop iterations ran.
+        How many units ran.
     """
-    deadline = time.process_time() + ms / 1000
-    iterations = 0
+    units = 0
     total = 0
-    while time.process_time() < deadline:
+    deadline = time.thread_time() + ms / 1000
+    while (units < work) if work else (time.thread_time() < deadline):
         for number in range(1000):
             total += number * number
-        iterations += 1
-    return iterations
+        units += 1
+    return units
 
 
 def alloc(mb: int, hold: bool = False) -> int:
@@ -305,6 +316,89 @@ def gc_stats(hold_ms: float = 0) -> dict[str, object]:
     }
 
 
+async def async_sleep(ms: float) -> float:
+    """Await asyncio.sleep(ms): the async twin of labs.sleep.
+
+    Why:
+        The asyncio executor's native path: a cooperative wait that gives the event loop
+        back to other jobs, and that a timeout can cancel (K4 §5.6).
+
+    Args:
+        ms: how long to sleep.
+
+    Returns:
+        The milliseconds actually slept.
+    """
+    started = time.monotonic()
+    await asyncio.sleep(ms / 1000)
+    return (time.monotonic() - started) * 1000
+
+
+async def block_loop(ms: float) -> float:
+    """An async task that blocks its event loop: time.sleep without await.
+
+    Why:
+        LAB: the uncooperative case. Nothing can cancel it until it returns (there's no
+        `await` to cancel at), so the master's hard kill at timeout_s + cancel_grace_s is
+        the only way out (K4 §5.4).
+
+    Args:
+        ms: how long to block.
+
+    Returns:
+        The milliseconds blocked.
+    """
+    started = time.monotonic()
+    time.sleep(ms / 1000)  # LAB: blocks the whole event loop on purpose
+    return (time.monotonic() - started) * 1000
+
+
+def nan() -> float:
+    """Return float("nan"), which JSON can't carry.
+
+    Why:
+        Every executor must turn a non-JSON return value into a SerializationError result
+        (ADR-009); this is the smallest such value.
+
+    Returns:
+        NaN.
+    """
+    return float("nan")
+
+
+def thread_name() -> str:
+    """The name of the thread running this task.
+
+    Why:
+        Tests check where tasks run: "MainThread" under sync, "kiln-job_N" under threads,
+        "kiln-tothread_N" for a sync task under asyncio.
+
+    Returns:
+        threading.current_thread().name.
+    """
+    return threading.current_thread().name
+
+
+def interp_probe() -> dict[str, object]:
+    """Which process, interpreter and copy of this module is running the task.
+
+    Why:
+        Under the interpreters executor the pid is the same for every job, but each
+        subinterpreter has its own copy of every module: id(globals()) differs (K4 step 4).
+
+    Returns:
+        {"pid", "interpreter_id", "module_dict_id"}.
+    """
+    try:
+        # WHY: concurrent.interpreters exists only on 3.14+; importlib keeps mypy (checking
+        # at the 3.13 floor) from rejecting the name.
+        interpreters = importlib.import_module("concurrent.interpreters")
+        interpreter_id = int(interpreters.get_current().id)
+    except ImportError:
+        interpreter_id = 0
+    return {"pid": os.getpid(), "interpreter_id": interpreter_id, "module_dict_id": id(globals())}
+
+
 def register(app: App) -> None:
     """Register every labs.* task on the given app.
 
@@ -327,3 +421,8 @@ def register(app: App) -> None:
     app.task(name="labs.churn")(churn)
     app.task(name="labs.gc_collect")(gc_collect)
     app.task(name="labs.gc_stats")(gc_stats)
+    app.task(name="labs.async_sleep")(async_sleep)
+    app.task(name="labs.block_loop")(block_loop)
+    app.task(name="labs.thread_name")(thread_name)
+    app.task(name="labs.nan")(nan)
+    app.task(name="labs.interp_probe")(interp_probe)

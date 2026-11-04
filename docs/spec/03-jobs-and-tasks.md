@@ -153,7 +153,7 @@ These are registered into the app only when `labs.enabled = true`, under the `la
 |---|---|---|---|
 | `labs.echo` | `value` | returns `value` | tests, load |
 | `labs.sleep` | `ms` | `time.sleep(ms/1000)`. IO-bound stand-in | K1, K4, K5 |
-| `labs.burn_cpu` | `ms` | busy loop of pure-Python arithmetic for about `ms` of CPU time | K4, K9 |
+| `labs.burn_cpu` | `ms` or `work` | busy loop of pure-Python arithmetic: for `ms` of the *calling thread's* CPU time (`time.thread_time`), or exactly `work` units of 1,000 multiply-adds (≈ 1,100 units = 20 ms on 3.15). Process CPU time would be wrong with parallel threads ([ADR-037](../decisions.md#adr-037)) | K4, K9 |
 | `labs.alloc` | `mb`, `hold` (bool) | allocates `mb` MiB of `bytearray`. If `hold`, keeps it in a module-level list (simulating a leak, or pushing toward OOM) | K1 (OOM), K6 |
 | `labs.crash` | `how` ∈ `exit1`, `segv`, `abort`, `sigkill_self` | dies the way requested (`os._exit(1)`, `ctypes.string_at(0)`, `os.abort()`, `os.kill(os.getpid(), 9)`) | K1 death classification |
 | `labs.hold_gil` | `seconds`, `method` ∈ `pydll` (default), `regex` | runs C code **while holding the GIL** (`ctypes.PyDLL(None).sleep`, or a catastrophic-backtracking regex as fallback), so even the heartbeat thread can't run. This is the "hung worker" fault (K1 §5.9) | K1 heartbeat lab, K4 |
@@ -169,3 +169,6 @@ The four K3 tasks accept an optional `hold_ms` (default 0): after the measured w
 | `labs.cycles` | `n` (number of "migrations"), `models=20`, `fields=10`, `payload_bytes=0` | runs `n` Django-like migrations, each building temporary model↔field reference cycles (K7 §5.4) | K7 |
 | `labs.async_sleep` | `ms` | `await asyncio.sleep(ms/1000)`, the async twin of `labs.sleep` | K4 |
 | `labs.block_loop` | `ms` | an `async def` that calls `time.sleep` **without** awaiting: an uncooperative task that blocks the event loop | K4, K5 |
+| `labs.thread_name` | — | `threading.current_thread().name`: which thread ran the task (`MainThread`, `kiln-job_N`, `kiln-tothread_N`) | K4 |
+| `labs.interp_probe` | — | `{pid, interpreter_id, module_dict_id}`: which process, subinterpreter and copy of the module ran it | K4 |
+| `labs.nan` | — | returns `float("nan")`, which JSON can't carry: the smallest serialization failure | K4 |

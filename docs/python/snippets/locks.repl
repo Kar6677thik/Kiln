@@ -1,0 +1,28 @@
+import threading
+lock = threading.Lock()
+lock.acquire()
+lock.locked()
+lock.acquire(timeout=0.1)
+lock.release()
+with lock:
+    print("inside:", lock.locked())
+
+lock.locked()
+rlock = threading.RLock()
+with rlock:
+    with rlock:
+        print("an RLock can be taken twice by the same thread")
+
+total = 0
+def add_many():
+    global total
+    for _ in range(100_000):
+        with lock:
+            total += 1
+
+ts = [threading.Thread(target=add_many) for _ in range(4)]
+for t in ts: t.start()
+
+for t in ts: t.join()
+
+total

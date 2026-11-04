@@ -12,12 +12,14 @@
 - **9P.** The network-style file protocol WSL uses to show Windows drives under `/mnt/c`. It's much slower than Linux's own filesystem. *See:* [spec/07](spec/07-environment.md).
 
 ## A
+- **ABI tag.** The build tag in an extension's file name, such as `cpython-315-x86_64-linux-gnu` vs `cpython-315t-...`: a `.so` built for one won't load in the other. *See:* [concepts/c-extensions.md](concepts/c-extensions.md)
 - **abi3 / abi3t.** abi3 is CPython's *stable ABI*: one compiled extension works across many Python versions (GIL builds only). abi3t (PEP 803, 3.15) is the stable ABI for free-threaded builds. *See:* K8.
 - **Absolute path / relative path.** An absolute path starts at the root (`/home/...`); a relative one is relative to the current folder (`docs/README.md`). *See:* [python/pathlib.md](python/pathlib.md).
 - **Abstract syntax tree (AST) / node.** The tree `ast.parse` builds from source code: each **node** is one piece of syntax (a call, an assignment, a name). *Example:* `os.fork()` is a `Call` node whose `func` is an `Attribute` node. *See:* [concepts/ast-and-symtable.md](concepts/ast-and-symtable.md)
 - **accept.** The call that takes one waiting connection from a listening socket and returns a new socket for it. *See:* [concepts/sockets-and-socketpairs.md](concepts/sockets-and-socketpairs.md).
 - **ADR (Architecture Decision Record).** A short note that records one design decision and why it was made. *Example:* ADR-009 says jobs carry JSON, not pickle. *See:* [decisions.md](decisions.md).
 - **Amdahl's law.** If part of a job can't run in parallel, that part caps the speedup. With 10% serial work, you can never get more than 10× faster, however many cores you add. *See:* K4.
+- **Amdahl's law / speed-up / serial fraction / parallel fraction.** With a fraction s of the work that can't run in parallel, N workers give a speed-up of at most 1/(s + (1−s)/N), and never more than 1/s. *See:* [concepts/amdahls-law.md](concepts/amdahls-law.md)
 - **Ancillary data.** A side channel of a Unix-socket message, separate from the normal bytes. SCM_RIGHTS uses it to carry open fds. *See:* [concepts/fd-passing.md](concepts/fd-passing.md)
 - **`__annotate__` scope.** An extra, hidden function scope Python 3.14+ creates to hold lazily evaluated annotations (PEP 649). Tools must find scopes by name, not by position, because it shifts the order. *See:* [python/symtable-module.md](python/symtable-module.md)
 - **Anonymous memory / file-backed memory.** Anonymous memory has no file behind it (the heap, where Python objects live, and stacks); file-backed memory is a mapped file (the interpreter binary, `.so` libraries). `Pss_Anon` vs `Pss_File` in smaps_rollup. *See:* [concepts/smaps.md](concepts/smaps.md)
@@ -37,6 +39,7 @@
 - **atexit.** A Python module that runs registered functions when the interpreter shuts down normally, in reverse order of registration. *See:* K3.
 - **Atexit handler / exit handler.** A function registered with `atexit.register` that runs when the interpreter exits normally, in LIFO order. *See:* [python/atexit.md](python/atexit.md)
 - **`atexit.register`.** Registers an exit handler. *See:* [python/atexit.md](python/atexit.md)
+- **Atomic operation / lost update.** An operation other threads can't see half-done; and the result of a read-modify-write that wasn't atomic: one thread's write overwrites another's with a stale value. *See:* [concepts/data-races.md](concepts/data-races.md)
 - **Atomic write.** Writing a file so readers see either the old version or the complete new one, never half of it: write to a temp file, then `os.replace()` it over the target.
 - **Attempt.** One try at running a job on a worker. A retried job has several.
 - **Attribute.** A value stored on an object, read with a dot: `job.state`. *See:* [python/classes-and-objects.md](python/classes-and-objects.md).
@@ -67,6 +70,7 @@
 - **Bytes / str (bytes vs. str).** `bytes` is raw 8-bit data. `str` is text made of Unicode characters. Converting between them is **encoding** and **decoding** (Kiln uses UTF-8).
 
 ## C
+- **C extension / shared object (`.so`).** A Python module written in C and compiled into a shared library (`.so` on Linux) that the interpreter loads at import. *See:* [concepts/c-extensions.md](concepts/c-extensions.md)
 - **Callable.** The type of anything you can call, written like `Callable[[int], str]`. *See:* [python/typing-protocol.md](python/typing-protocol.md).
 - **Callback.** A function handed to other code to be called later, when something happens ("call this when the job finishes"). *See:* [concepts/event-loops.md](concepts/event-loops.md).
 - **Capacity / slot.** How many jobs a worker can run at the same time. Each one is a "slot".
@@ -89,6 +93,7 @@
 - **Context manager.** An object that does setup when a `with` block starts and guaranteed cleanup when it ends, even after an error. *See:* [python/context-managers.md](python/context-managers.md).
 - **contextlib.contextmanager.** A decorator that turns a function with one `yield` into a context manager. *See:* [python/context-managers.md](python/context-managers.md).
 - **Cooperative cancellation.** Asking code to stop, which only takes effect when that code reaches a point where it checks, such as an `await` in asyncio. You can't force it.
+- **Cooperative cancellation / `asyncio.timeout` / `CancelledError`.** Stopping an async task by asking it: `asyncio.timeout` raises `CancelledError` inside the task at its next `await`, then `TimeoutError` to the caller. A task that never awaits, or swallows the error, can't be stopped this way. *See:* [concepts/cpu-vs-io-bound.md](concepts/cpu-vs-io-bound.md)
 - **Coordinated omission.** A benchmarking trap: if the load generator pauses while the server is stalled, it never records the requests it *would* have sent, so latency looks far better than it was. *See:* [spec/10 §6](spec/10-measurement-methodology.md).
 - **Copy (of bytes).** Duplicating data in memory; slicing `bytes` copies, slicing a memoryview doesn't. *See:* [python/bytearray-and-memoryview.md](python/bytearray-and-memoryview.md).
 - **Copy-on-read.** Instagram's name for the problem in K3: in CPython, merely *reading* an object changes its refcount (a write), so shared copy-on-write pages get copied anyway.
@@ -96,9 +101,13 @@
 - **copyreg.** A stdlib module for registering a `__reduce__`-style recipe for a class you don't own. *See:* [python/pickle-and-reduce.md](python/pickle-and-reduce.md)
 - **Core dump.** A file with a crashed process's memory, written for some fatal signals (if enabled), for debugging later. *See:* [concepts/exit-status.md](concepts/exit-status.md).
 - **Coroutine / coroutine object.** A function call that can pause and resume. Calling an `async def` function returns a coroutine object, which only runs when awaited or driven by an event loop. *See:* [python/asyncio-first-look.md](python/asyncio-first-look.md).
+- **Coroutine function / "async is not parallel".** An `async def` function, which returns a coroutine object instead of running; and the reminder that one event loop runs one thing at a time, interleaving waits, not computations. *See:* [python/async-await-basics.md](python/async-await-basics.md)
 - **Counter / gauge / histogram.** Metric types. A counter only goes up (jobs submitted). A gauge goes up and down (queue depth). A histogram counts observations per range, or *bucket* (latencies). *See:* [spec/06 §4](spec/06-observability.md).
+- **CPU utilization.** CPU time used ÷ wall time elapsed; 1.0 means one core fully busy, 4.0 four cores. *See:* [concepts/cpu-vs-io-bound.md](concepts/cpu-vs-io-bound.md)
+- **CPU-bound / I/O-bound.** A CPU-bound job spends its time computing; an I/O-bound one spends it waiting (network, disk, sleep). Threads help I/O-bound work on every build, CPU-bound work only without the GIL. *See:* [concepts/cpu-vs-io-bound.md](concepts/cpu-vs-io-bound.md)
 - **CPython.** The standard implementation of Python, written in C. It's what `python` usually means.
 - **Crash loop.** A process that fails right after starting, gets restarted, and fails again, over and over. *See:* [spec/04 §5.1](spec/04-supervisor.md#51-keeping-the-worker-count).
+- **Critical section.** Code that runs while a lock is held, so only one thread at a time executes it. *See:* [python/locks.md](python/locks.md)
 - **CRLF / LF.** Line endings. Windows uses carriage return plus line feed (`\r\n`) and Unix uses `\n`. Shell scripts with CRLF break, so Kiln forces LF with `.gitattributes`.
 - **`ctypes` / `ctypes.CDLL` / `ctypes.PyDLL` / `ctypes.pythonapi`.** The stdlib library for calling C functions. `CDLL` calls release the GIL; `PyDLL` calls keep it; `pythonapi` is a `PyDLL` for the running interpreter's own C API (`PyGC_Enable`). *See:* [python/ctypes-basics.md](python/ctypes-basics.md)
 - **Custom exception.** Your own error type: a class that inherits from `Exception`. *See:* [python/exceptions.md](python/exceptions.md).
@@ -143,6 +152,7 @@
 - **Event.** Something that happened which a program must react to: a socket became readable, a timer expired, a signal arrived. (In Kiln's logs, an `event=` name.) *See:* [concepts/event-loops.md](concepts/event-loops.md).
 - **Event (threading).** `threading.Event`: a shared flag one thread can set and others can wait for. *See:* [python/threading-basics.md](python/threading-basics.md).
 - **Event loop.** A loop that waits for "something happened" events (data arrived, a timer expired) and runs the code for each one. Kiln's master has a hand-written one; the gateway uses asyncio's. *See:* [spec/01 §4](spec/01-architecture.md#4-the-masters-event-loop-the-heart-of-kiln).
+- **Event loop lifecycle / `asyncio.run_coroutine_threadsafe` / `asyncio.to_thread` / `loop.call_soon_threadsafe`.** Creating, running and closing a loop (`asyncio.run` does all three); and the three thread-crossing doors: hand a coroutine to a loop in another thread, run a plain function on a thread from inside a loop, and schedule a callback on a loop from another thread. *See:* [python/asyncio-run.md](python/asyncio-run.md)
 - **Event name.** The stable snake_case identifier on every Kiln log line (`event=worker_died`). Tests and labs search for these. *See:* [spec/06 §2](spec/06-observability.md).
 - **EVENT_READ / EVENT_WRITE.** The selector flags for "recv won't block" and "send won't block". *See:* [python/selectors-module.md](python/selectors-module.md).
 - **Everything is a file.** The Unix idea that files, sockets, pipes, terminals and `/proc` entries all use the same read/write/close interface. *See:* [concepts/files-and-file-descriptors.md](concepts/files-and-file-descriptors.md).
@@ -179,6 +189,7 @@
 - **Format string (struct).** A layout description for struct, such as `"!I"`: network byte order, one unsigned 32-bit int. *See:* [python/struct.md](python/struct.md).
 - **Frame (protocol).** One complete message on the wire: a 4-byte length plus the JSON payload. *See:* [spec/02](spec/02-protocol.md).
 - **Free variable.** A name a function reads from an *enclosing* function, not from its own scope or the module. It's what makes a function a closure. *See:* [concepts/ast-and-symtable.md](concepts/ast-and-symtable.md)
+- **Free-threaded build / `Py_GIL_DISABLED` / `sys._is_gil_enabled()` / `PYTHON_GIL`.** CPython compiled without the GIL (Kiln's `3.15t`); the build flag that says so (sysconfig, 1 = free-threaded); whether the GIL is on *right now*; and the environment variable that forces it off (0) or on (1), on free-threaded builds only. *See:* [concepts/free-threading.md](concepts/free-threading.md)
 - **Free-threading (3.13t / 3.15t).** A CPython build without the GIL, so threads can run Python code truly in parallel. *See:* K4.
 - **Freeze recipe.** From the `gc` docs: `gc.disable()` early in the parent, `gc.freeze()` right before `fork()`, `gc.enable()` early in the child. Kiln's `worker.gc_mode = freeze`. *See:* [concepts/gc-freeze.md](concepts/gc-freeze.md)
 - **Frozen dataclass.** A dataclass made read-only with `frozen=True`; assigning to a field raises an error. *See:* [python/dataclasses.md](python/dataclasses.md).
@@ -201,6 +212,7 @@
 - **getattr.** `getattr(obj, "name")` reads an attribute whose name is a string. *See:* [python/importlib.md](python/importlib.md).
 - **`get_context` / `set_start_method`.** `get_context("spawn")` returns a multiprocessing API bound to one start method; `set_start_method` changes the default for the whole program (once). *See:* [python/multiprocessing-basics.md](python/multiprocessing-basics.md)
 - **GIL (Global Interpreter Lock).** A lock in standard CPython that lets only one thread run Python bytecode at a time. *See:* K4.
+- **GIL re-enabling.** On a free-threaded build, importing a C extension that doesn't declare `Py_mod_gil` turns the GIL on for the rest of the process, with one warning. Kiln's gilwatch names the culprit. *See:* [concepts/free-threading.md](concepts/free-threading.md)
 - **git.** The version-control tool that records snapshots (commits) of a project's files over time. *See:* [concepts/git-basics.md](concepts/git-basics.md).
 - **@given.** Hypothesis's decorator that runs a test many times with generated inputs. *See:* [python/hypothesis-basics.md](python/hypothesis-basics.md).
 - **`global`.** A statement that lets a function *assign* to a module-level variable (`global GRAPH`). Reading one never needs it. *See:* [python/closures.md](python/closures.md).
@@ -306,6 +318,7 @@
 - **Minor fault.** A page fault the kernel handles without touching the disk: mapping a zero page, or copying a shared page on write (copy-on-write). *See:* [concepts/virtual-memory-and-pages.md](concepts/virtual-memory-and-pages.md)
 - **Module.** A `.py` file whose code other code can import. *See:* [python/running-python-and-the-repl.md](python/running-python-and-the-repl.md).
 - **Module cache (`sys.modules`).** The dict of modules a process has already imported. A second `import x` finds it there, so a module's top-level code runs only once per process. *See:* [concepts/import-system.md](concepts/import-system.md)
+- **Module slot / `Py_mod_gil`.** An `{id, value}` entry in a multi-phase module definition; the slot by which a module declares whether it needs the GIL. Without it, a free-threaded build assumes it does. *See:* [concepts/c-extensions.md](concepts/c-extensions.md)
 - **Module spec / `exec_module`.** A module spec records a module's name, origin and loader; the loader's `exec_module` runs the module's code. gcwatch wraps `exec_module`. *See:* [python/import-hooks-meta-path.md](python/import-hooks-meta-path.md)
 - **ModuleNotFoundError.** The error raised when an imported name can't be found on `sys.path`. *See:* [python/modules-and-imports.md](python/modules-and-imports.md).
 - **Monkeypatching.** Replacing a module's or class's attribute at runtime. It works for everyone who looks the attribute up *later*, not for code that saved the old one. *See:* [python/monkeypatching.md](python/monkeypatching.md)
@@ -331,6 +344,7 @@
 - **oom_score_adj.** A per-process number (−1000 to 1000) that biases the OOM killer's choice. Kiln workers raise theirs to 500 so the master survives ([ADR-029](decisions.md#adr-029)).
 - **Option (command line).** A named argument such as `--json`, usually optional and with a default. *See:* [python/argparse.md](python/argparse.md).
 - **Orphan.** A process whose parent died. Linux re-parents it to pid 1 (init), so the original parent can no longer reap it.
+- **OS scheduler / context switch.** The part of the kernel that decides which thread runs on which CPU core, and the act of pausing one thread to resume another. *See:* [concepts/threads.md](concepts/threads.md)
 - **os._exit.** Ends the process immediately: no `finally` blocks, no atexit handlers, no buffer flushing. The correct way out of a forked child (ADR-028). *See:* [python/os-module.md](python/os-module.md).
 - **os.fork.** Copies the running process; returns 0 in the child and the child's pid in the parent. *See:* [python/os-module.md](python/os-module.md).
 - **os.waitpid.** Collects a child's wait status (and reaps it). *See:* [python/os-module.md](python/os-module.md).
@@ -351,6 +365,8 @@
 - **PEP.** Python Enhancement Proposal, a design document for a Python change. *Example:* PEP 750 (t-strings).
 - **PEP 442.** The Python 3.4 change that lets the GC collect reference cycles even when objects in them have `__del__` methods. *See:* ADR-016.
 - **PEP 446.** File descriptors created by Python are non-inheritable by default, so child processes don't get them unless you ask. *See:* K2.
+- **Per-interpreter GIL / `concurrent.interpreters` / `InterpreterPoolExecutor`.** Since PEP 684 each subinterpreter has its own GIL, so they run in parallel even on the GIL build; PEP 734's module creates and calls them (3.14+); the pool runs functions in a set of them. *See:* [concepts/subinterpreters.md](concepts/subinterpreters.md)
+- **Per-object lock / single operation vs compound operation.** On the free-threaded build each list or dict operation takes the container's own lock, so the container is never corrupted; but a *compound* operation (get, then set) is two operations, and other threads can slip in between. *See:* [concepts/thread-safety-of-builtins.md](concepts/thread-safety-of-builtins.md)
 - **perf_counter.** The highest-resolution monotonic clock (`time.perf_counter()`), for timing short operations. *See:* [python/time-monotonic.md](python/time-monotonic.md).
 - **Permanent generation.** Where `gc.freeze()` puts objects: the GC never scans them again. *See:* K3.
 - **pickle.** Python's built-in way to turn objects into bytes and back. Unsafe on untrusted data. Required by `multiprocessing` spawn/forkserver.
@@ -385,6 +401,7 @@
 - **Protocol (networking).** An agreement about what bytes mean.
 - **PSS / RSS / USS.** Memory measurements. **RSS** counts every page a process uses, shared ones included. **PSS** divides each shared page among the processes that share it. **USS** counts only pages private to the process. *See:* K3 `concepts/memory-metrics.md`.
 - **ptrace / ptrace_scope.** ptrace is the Linux facility that lets one process inspect another (debuggers, profilers, `asyncio ps`). The Yama setting `ptrace_scope` restricts it, and the value 1 means "only your own children". *See:* [spec/07](spec/07-environment.md).
+- **`PyInit_*` / single-phase initialization / multi-phase initialization.** An extension's entry function; the old way (it returns a finished module) and the PEP 489 way (it returns a definition with slots, and the interpreter builds the module, which subinterpreters require). *See:* [concepts/c-extensions.md](concepts/c-extensions.md)
 - **Py_mod_gil.** The slot a C extension uses to declare "I'm safe without the GIL". Without it, importing the extension on a free-threaded build turns the GIL back on. *See:* K4, ADR-015.
 - **PyDLL.** The `ctypes` loader whose calls keep the GIL held (normal `CDLL` calls release it). Used by `labs.hold_gil`.
 - **python -m.** Runs a module by its import name: `python -m kiln`, `python -m pytest`. *See:* [python/running-python-and-the-repl.md](python/running-python-and-the-repl.md).
@@ -393,6 +410,7 @@
 ## Q
 - **Qualified name (qualname) / `__qualname__`.** The dotted path to a definition inside its module, for example `outer.<locals>.inner` for a nested function. The `<locals>` part is why such a function can't be pickled. *See:* [python/closures.md](python/closures.md)
 - **Queue.** Jobs waiting for a worker, in FIFO order.
+- **`queue.Queue`.** A thread-safe first-in-first-out queue: the safe way to hand work from one thread to another. *See:* [concepts/thread-safety-of-builtins.md](concepts/thread-safety-of-builtins.md)
 - **Quoting.** Wrapping text in `"..."` or `'...'` in the shell so spaces and special characters aren't split or expanded. Essential for paths like `Karthik Reddy`. *See:* [concepts/terminal-and-wsl.md](concepts/terminal-and-wsl.md).
 
 ## R
@@ -409,6 +427,7 @@
 - **Reference cycle.** Objects that refer to each other in a loop, so their refcounts never reach 0 on their own.
 - **register / unregister.** Start or stop watching a socket with a selector. *See:* [python/selectors-module.md](python/selectors-module.md).
 - **Release build.** Native code compiled with optimizations on. Benchmarks of Rust code must use release builds. *See:* K8.
+- **Releasing the GIL.** Dropping the GIL around a blocking call (sleep, socket read) or long C work, so other threads can run Python meanwhile. *See:* [concepts/gil.md](concepts/gil.md)
 - **Reload.** Replacing all workers with new ones (on SIGHUP) without dropping jobs.
 - **Remote attach (PEP 768).** Running a debugger or code inside an already-running Python process at a safe point (`python -m pdb -p PID`, `sys.remote_exec`). *See:* K6.
 - **Reparenting / subreaper.** When a process's parent dies, the kernel gives the orphan a new parent: the nearest ancestor marked as a subreaper, or pid 1. On WSL that's the `Relay(...)` process. *See:* [concepts/reparenting-and-orphans.md](concepts/reparenting-and-orphans.md)
@@ -443,6 +462,7 @@
 - **Serialize / deserialize.** Turn values into text or bytes for storage or sending, and back again. *See:* [python/json.md](python/json.md).
 - **Server.** A long-running process that waits for requests and answers them. *See:* [concepts/what-is-a-server.md](concepts/what-is-a-server.md).
 - **set.** An unordered collection with no duplicates: `{1, 2, 3}`. *See:* [python/variables-and-types.md](python/variables-and-types.md).
+- **Shareable object / stateless function.** Values that cross between interpreters without pickling (None, bool, int, float, str, bytes, tuples of these, queues), and functions with no closure and no globals, which are copied as code. Anything else is pickled, or refused (`NotShareableError`). *See:* [concepts/subinterpreters.md](concepts/subinterpreters.md)
 - **Shared page / private page.** A page mapped by more than one process vs. by only this one. After `fork` everything starts shared; each write makes a private copy. *See:* [concepts/copy-on-write.md](concepts/copy-on-write.md)
 - **Shell.** The program inside the terminal that reads your commands and runs them, such as bash or zsh. *See:* [concepts/terminal-and-wsl.md](concepts/terminal-and-wsl.md).
 - **Shim.** A wrapper put in place of a function so its calls can be observed; gcwatch's layer A replaces `gc.enable` with one. *See:* [python/monkeypatching.md](python/monkeypatching.md)
@@ -485,6 +505,7 @@
 - **Subinterpreter.** A separate Python interpreter inside the same process, with its own modules and globals. *See:* K4.
 - **super().** Calls the parent class's version of a method from inside a subclass. *See:* [python/classes-and-objects.md](python/classes-and-objects.md).
 - **Swap.** Disk space the kernel uses as overflow memory. With swap, a memory-hungry process slows down instead of being killed, which is why the OOM lab sets `MemorySwapMax=0`. *See:* [concepts/cgroups-and-oom-killer.md](concepts/cgroups-and-oom-killer.md).
+- **Switch interval.** `sys.getswitchinterval()`, 0.005 s: how long a thread may hold the GIL before it is asked to pass it on. *See:* [concepts/gil.md](concepts/gil.md)
 - **Symbol table / SymbolTable / Symbol.** The compiler's record of every name in every scope and whether it is local, global or free. Python's `symtable` module exposes it: one `SymbolTable` per scope, one `Symbol` per name. *See:* [python/symtable-module.md](python/symtable-module.md)
 - **`symtable.symtable`.** Builds the symbol table for a piece of source code without running it. *See:* [python/symtable-module.md](python/symtable-module.md)
 - **`sys.getrefcount` / `sys._is_immortal`.** An object's reference count (plus 1 for the argument itself) / whether it is immortal (3.14+). *See:* [python/sys-getrefcount.md](python/sys-getrefcount.md)
@@ -508,6 +529,10 @@
 - **Test collection.** pytest's automatic search for test files and test functions. *See:* [python/pytest-basics.md](python/pytest-basics.md).
 - **Test pyramid.** Many fast unit tests, fewer integration tests, and only a few slow end-to-end tests. *See:* [spec/09](spec/09-testing-strategy.md).
 - **Thread.** A separate line of execution inside a process, sharing the process's memory. A worker's heartbeat runs on its own thread. *See:* [python/threading-basics.md](python/threading-basics.md).
+- **Thread pool.** A fixed set of threads reused for many tasks, instead of one new thread per task. Kiln's `threads` executor is one. *See:* [concepts/threads.md](concepts/threads.md)
+- **`threading.Lock` / `threading.RLock` / `acquire` / `release`.** A mutex; a re-entrant mutex the same thread may take again; taking it (waiting if needed); giving it back. `with lock:` does both. *See:* [python/locks.md](python/locks.md)
+- **`threading.Thread` / `start` / `join` / `threading.current_thread` / `threading.Event` / `threading.Barrier`.** Create a thread; run it; wait for it to finish; the thread running now; a flag threads can wait on; and a meeting point that releases N threads together. *See:* [python/threading.md](python/threading.md)
+- **`ThreadPoolExecutor` / `submit` / `Future` / `result()` / `add_done_callback` / `shutdown(wait=)`.** The concurrent.futures API: a thread pool, handing it a call, the placeholder for the call's outcome, waiting for it, being told when it's done, and stopping the pool. *See:* [python/concurrent-futures.md](python/concurrent-futures.md)
 - **Threshold / automatic collection.** The GC runs *automatically* when allocations minus deallocations exceed `threshold0` (2000 on Kiln's versions). `gc.set_threshold(0)` turns automatic collections off; an explicit `gc.collect()` still runs. *See:* [concepts/garbage-collector.md](concepts/garbage-collector.md)
 - **Throughput.** How many jobs per second the system completes.
 - **Timer.** An action scheduled for a deadline, such as "kill this job's worker if it's still running at t=31.5". *See:* [concepts/event-loops.md](concepts/event-loops.md).

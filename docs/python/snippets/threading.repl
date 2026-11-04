@@ -1,0 +1,35 @@
+import threading, time
+threading.current_thread().name
+results = []
+def work(n):
+    results.append((n, threading.current_thread().name))
+
+t = threading.Thread(target=work, args=(1,), name="helper")
+t.start()
+t.join()
+results
+t.is_alive()
+started = threading.Event()
+def waiter():
+    started.wait()
+    results.append("event seen")
+
+w = threading.Thread(target=waiter)
+w.start()
+w.is_alive()
+started.set()
+w.join()
+results[-1]
+barrier = threading.Barrier(3)
+order = []
+def racer(i):
+    barrier.wait()
+    order.append(i)
+
+ts = [threading.Thread(target=racer, args=(i,)) for i in range(3)]
+for x in ts: x.start()
+
+for x in ts: x.join()
+
+sorted(order)
+threading.Thread(target=time.sleep, args=(0,), daemon=True).daemon

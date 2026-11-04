@@ -36,7 +36,7 @@ Status: ⏳ planned · ✍️ written · ✅ reviewed by the learner
 | 24 | [`ast-module`](ast-module.md), [`symtable-module`](symtable-module.md), [`multiprocessing-basics`](multiprocessing-basics.md) | K2 | ✍️ |
 | 25 | [`gc-module`](gc-module.md), [`atexit`](atexit.md), [`sys-getrefcount`](sys-getrefcount.md), [`monkeypatching`](monkeypatching.md) | K3 | ✍️ |
 | 26 | [`import-hooks-meta-path`](import-hooks-meta-path.md), [`ctypes-basics`](ctypes-basics.md), [`traceback-module`](traceback-module.md), [`tracemalloc-basics`](tracemalloc-basics.md) | K3 | ✍️ |
-| 27 | `threading`, `concurrent-futures`, `async-await-basics`, `asyncio-run`, `locks` | K4 | ⏳ |
+| 27 | [`threading`](threading.md), [`concurrent-futures`](concurrent-futures.md), [`async-await-basics`](async-await-basics.md), [`asyncio-run`](asyncio-run.md), [`locks`](locks.md) | K4 | ✍️ |
 | 28 | `async-await-deep-dive`, `asyncio-streams`, `asyncio-taskgroup`, `asyncio-timeout` (+ `contextvars` if used) | K5 | ⏳ |
 | 29 | `functools-lru-cache`, `weakref`, `del-and-finalizers` | K6 | ⏳ |
 | 30 | `gc-callbacks`, `dynamic-classes-with-type`, `metaclass-basics` | K7 | ⏳ |

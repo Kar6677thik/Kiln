@@ -1,0 +1,70 @@
+{
+  "config": {},
+  "experiment": "matrix",
+  "git": {
+    "commit": "62e1217",
+    "dirty": true
+  },
+  "host": {
+    "cpu_model": "Intel(R) Core(TM) Ultra 5 225H",
+    "cpus": 14,
+    "kernel": "6.6.87.2-microsoft-standard-WSL2",
+    "mem_total_bytes": 7751778304,
+    "notes": "source=ext4-snapshot",
+    "pinned_cpus": null,
+    "wsl": true
+  },
+  "interpreter": {
+    "build": "freethreaded",
+    "executable": "/home/Megatron/.cache/kiln/venvs/py3.15t/bin/python",
+    "gil_enabled_at_end": false,
+    "implementation": "cpython",
+    "jit_enabled": false,
+    "version": "3.15.1"
+  },
+  "metrics": {
+    "cpu_util": {
+      "unit": "ratio",
+      "value": 3.771
+    },
+    "gil_enabled": {
+      "unit": "count",
+      "value": 0
+    },
+    "jobs_succeeded": {
+      "unit": "count",
+      "value": 400
+    },
+    "latency_p50": {
+      "unit": "ms",
+      "value": 411.956
+    },
+    "latency_p99": {
+      "unit": "ms",
+      "value": 582.257
+    },
+    "throughput": {
+      "unit": "jobs/s",
+      "value": 157.4
+    },
+    "worker_rss_bytes": {
+      "unit": "bytes",
+      "value": 104468480
+    }
+  },
+  "milestone": "K4",
+  "notes": "",
+  "params": {
+    "concurrency": 4,
+    "executor": "interpreters",
+    "interp": "3.15t",
+    "jobs": 400,
+    "workers": 1,
+    "workload": "cpu"
+  },
+  "repeat_index": 4,
+  "run_id": "20261104T130621Z-py3.15t-9e6b",
+  "schema_version": 1,
+  "started_at": "2026-11-04T13:06:21.588Z",
+  "variant": "cpu-interpreters-c4"
+}

@@ -1,0 +1,9 @@
+module body runs here with __name__ = '__main__'
+lambda: 1                    -> 1
+stateless(41)                -> 42
+module body runs here with __name__ = '<fake __main__>'
+uses_global()                -> 20
+closure lambda: offset       -> NotShareableError
+stateless(a threading.Lock)  -> NotShareableError
+os.getpid                    -> 'same process'
+main interpreter: uses_global() = 2000

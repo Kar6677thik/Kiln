@@ -62,7 +62,13 @@ def dispatch(arb: "Arbiter") -> int:
         worker = candidates[0]
         attempt = arb.jobs.start(job, worker.worker_id, worker.pid, now, wall)
         worker.inflight[job.job_id] = attempt.n
-        timer_id = arb.timers.schedule(now + job.timeout_s, "job_timeout", (job.job_id, attempt.n))
+        # WHY (K4 §5.4): an asyncio worker cancels an async task itself at timeout_s and
+        # reports timed_out; the master's hard kill waits cancel_grace_s longer, so it only
+        # hits tasks that ignore cancellation or block the event loop.
+        limit = job.timeout_s
+        if worker.executor == "asyncio":
+            limit += arb.config.jobs.cancel_grace_s
+        timer_id = arb.timers.schedule(now + limit, "job_timeout", (job.job_id, attempt.n))
         arb.job_timers[(job.job_id, attempt.n)] = timer_id
         run = Run(job.job_id, attempt.n, job.task, job.args, job.kwargs, job.timeout_s)
         arb.send(worker.conn, message(MsgType.RUN, run))

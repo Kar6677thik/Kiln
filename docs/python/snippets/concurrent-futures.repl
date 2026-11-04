@@ -1,0 +1,19 @@
+from concurrent.futures import ThreadPoolExecutor
+import threading, time
+pool = ThreadPoolExecutor(max_workers=2, thread_name_prefix="kiln-job")
+future = pool.submit(pow, 2, 10)
+future
+future.result()
+future.done()
+pool.submit(lambda: threading.current_thread().name).result()
+bad = pool.submit(int, "not a number")
+bad.exception()
+bad.result()
+list(pool.map(lambda x: x * x, [1, 2, 3]))
+seen = []
+f = pool.submit(time.sleep, 0.05)
+f.add_done_callback(lambda fut: seen.append(fut.done()))
+f.result()
+seen
+pool.shutdown(wait=True)
+pool.submit(pow, 2, 2)

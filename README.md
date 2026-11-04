@@ -4,7 +4,7 @@
 
 Kiln is a small server in the style of gunicorn and Celery. A *master* process supervises a team of *worker* processes and hands them jobs from an in-memory queue. Each milestone recreates a real production incident (Instagram's copy-on-write memory problem, the Python 3.14 GC revert, forkserver breakages, blocked event loops, memory leaks, free-threading), measures it, fixes it, and explains it.
 
-> **Status:** K0–K2 done; K3 (the copy-on-write lab: GC modes, `kiln mem`, the "who re-enabled the GC?" detector) built and awaiting review (2026-11-04). Next: K4, concurrency backends and free-threading.
+> **Status:** K0–K3 done; K4 (concurrency backends: threads, asyncio, subinterpreters, free-threading) built and awaiting review (2026-11-04). Next: K5, the async gateway and event-loop watchdog.
 > **This is a learning project.** Correctness and explanation come before features. It isn't meant for production use: there's no persistence, no auth, and it's localhost only.
 
 ## Quick start

@@ -26,6 +26,7 @@ import signal
 import socket
 import sys
 import sysconfig
+import threading
 from types import FrameType
 from typing import NoReturn
 
@@ -48,8 +49,10 @@ from kiln.protocol.messages import (
     message,
     parse_master_message,
 )
+from kiln.worker import gilwatch
 from kiln.worker.channel import Channel, ChannelClosed
-from kiln.worker.executors.sync import SyncExecutor
+from kiln.worker.executors import make_executor
+from kiln.worker.executors.base import Executor
 from kiln.worker.heartbeat import HeartbeatThread
 
 log = logging.getLogger(__name__)
@@ -65,11 +68,18 @@ class WorkerState:
 
     Why:
         Signal handlers and the heartbeat thread need to read or set these; one small object
-        is clearer than module globals (code-style §6).
+        is clearer than module globals (code-style §6). Since K4, several executor threads
+        finish jobs at the same time, so the counters change only under `lock` (the
+        "WorkerCounters" lock of K4 §5.2; docs/concepts/data-races.md).
     """
 
     def __init__(self) -> None:
-        """Start with nothing done."""
+        """Start with nothing done.
+
+        Why:
+            One instance per worker process, created before any thread that reads it.
+        """
+        self.lock = threading.Lock()
         self.jobs_done = 0
         self.retiring = False
         self.retire_reason = ""
@@ -244,6 +254,9 @@ def run_worker(
     _setup_signals(state)
     # WHY (K3 §5.5): before the app is imported, so its import-time objects follow the mode.
     gcmodes.apply_child_early(config.worker.gc_mode, config.start.method)
+    # WHY (K4 Â§5.8): before the app is imported, so a legacy C extension in it is caught.
+    # A forked worker inherits the master's watch; installing again is a no-op.
+    gilwatch.install_for_process(log)
     watch = None
     if config.labs.gc_watch:
         # WHY (K3 §5.7): installed before the app is imported, so layer B sees its imports.
@@ -260,7 +273,7 @@ def run_worker(
         return EXIT_BOOT_ERROR
     # WHY: under fork/forkserver the graph was inherited; under spawn this builds our own copy.
     preload.ensure_graph(config.labs.preload_mb, config.labs.preload_composition)
-    executor = SyncExecutor(loaded)
+    executor = make_executor(config, loaded)
     # WHY: jitter spreads recycling so workers started together don't all restart together.
     # WHY (noqa S311): random isn't for cryptography, and spreading restarts doesn't need it.
     jitter = random.randint(0, config.worker.max_jobs_jitter)  # noqa: S311
@@ -278,7 +291,7 @@ def run_worker(
         pid=os.getpid(),
         generation=generation,
         capacity=executor.capacity,
-        executor="sync",
+        executor=executor.name,
         manifest=loaded.manifest(config.jobs),
         python=_python_info(),
     )
@@ -290,12 +303,16 @@ def run_worker(
             "worker_booting",
             gen=generation,
             start_method=config.start.method,
-            executor="sync",
+            executor=executor.name,
         )
-        return _receive_loop(chan, executor, config, state, max_jobs_limit)
+        code = _receive_loop(chan, executor, config, state, max_jobs_limit)
+        # WHY: graceful: every job already accepted finishes before we exit (K4 §5.2).
+        executor.shutdown(wait=True)
+        return code
     except ChannelClosed:
         # WHY: workers don't outlive their master (K1 spec §5.8 step 9).
         logsetup.event(log, logging.WARNING, "master_gone", jobs_done=state.jobs_done)
+        executor.shutdown(wait=False)
         return EXIT_OK
     finally:
         heartbeat.stop()
@@ -303,7 +320,7 @@ def run_worker(
 
 
 def _receive_loop(
-    chan: Channel, executor: SyncExecutor, config: Config, state: WorkerState, max_jobs_limit: int
+    chan: Channel, executor: Executor, config: Config, state: WorkerState, max_jobs_limit: int
 ) -> int:
     """Receive and handle master messages until it's time to exit.
 
@@ -341,16 +358,22 @@ def _receive_loop(
         Args:
             result: the job's result.
         """
-        state.current_job = None
-        state.jobs_done += 1
-        _check_recycling(config, state, max_jobs_limit)
-        if not shutdown_received:
-            _announce(chan, state)
+        # CONCEPT(data-races): `jobs_done += 1` is read-modify-write; with several executor
+        # threads finishing at once, two updates could collide and one would be lost
+        # (labs/k4/race_demo.py shows exactly that). The lock makes count + decide + announce
+        # one step.
+        with state.lock:
+            state.current_job = None
+            state.jobs_done += 1
+            _check_recycling(config, state, max_jobs_limit)
+            if not shutdown_received:
+                _announce(chan, state)
         _send_result(chan, result)
 
     while True:
         if not shutdown_received:
-            _announce(chan, state)  # WHY: SIGTERM can set `retiring` between jobs
+            with state.lock:
+                _announce(chan, state)  # WHY: SIGTERM can set `retiring` between jobs
         if shutdown_received and executor.inflight() == 0:
             return EXIT_OK
         raw = chan.receive(timeout_s=POLL_S)

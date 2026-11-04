@@ -43,15 +43,15 @@
 | 36 | [`finalization-and-atexit`](finalization-and-atexit.md) | K3 | ✍️ |
 | 37 | [`global-interpreter-state`](global-interpreter-state.md) | K3 | ✍️ |
 | 38 | `benchmarking-statistics` (deferred to K9: K3's lab reports medians and bootstrap CIs computed in its driver, explained in the lab report) | K3, K9 | ⏳ |
-| 39 | `threads` | K4 | ⏳ |
-| 40 | `gil` | K4 | ⏳ |
-| 41 | `free-threading` | K4 | ⏳ |
-| 42 | `subinterpreters` | K4 | ⏳ |
-| 43 | `data-races` | K4 | ⏳ |
-| 44 | `thread-safety-of-builtins` | K4 | ⏳ |
-| 45 | `c-extensions` | K4 | ⏳ |
-| 46 | `cpu-vs-io-bound` | K4 | ⏳ |
-| 47 | `amdahls-law` | K4 | ⏳ |
+| 39 | [`threads`](threads.md) | K4 | ✍️ |
+| 40 | [`gil`](gil.md) | K4 | ✍️ |
+| 41 | [`free-threading`](free-threading.md) | K4 | ✍️ |
+| 42 | [`subinterpreters`](subinterpreters.md) | K4 | ✍️ |
+| 43 | [`data-races`](data-races.md) | K4 | ✍️ |
+| 44 | [`thread-safety-of-builtins`](thread-safety-of-builtins.md) | K4 | ✍️ |
+| 45 | [`c-extensions`](c-extensions.md) | K4 | ✍️ |
+| 46 | [`cpu-vs-io-bound`](cpu-vs-io-bound.md) | K4 | ✍️ |
+| 47 | [`amdahls-law`](amdahls-law.md) | K4 | ✍️ |
 | 48 | `coroutines-and-tasks` | K5 | ⏳ |
 | 49 | `cancellation` | K5 | ⏳ |
 | 50 | `taskgroup` | K5 | ⏳ |

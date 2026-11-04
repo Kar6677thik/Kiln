@@ -1,0 +1,3 @@
+polite    -> TimeoutError         after <NUM> s
+stubborn  -> ignored the cancel   after <NUM> s
+blocker   -> finished             after <NUM> s

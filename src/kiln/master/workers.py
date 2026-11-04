@@ -54,6 +54,10 @@ class WorkerHandle:
     launched_mono: float
     state: WorkerState = WorkerState.BOOTING
     capacity: int = 1
+    # From `ready`; asyncio workers get a hard kill at timeout_s + cancel_grace_s (K4).
+    executor: str = "sync"
+    # From `ready` and heartbeats; a 3.15t worker can turn the GIL back on (K4).
+    gil_enabled: bool | None = None
     inflight: dict[str, int] = field(default_factory=dict)  # job_id → attempt number
     jobs_done: int = 0
     last_heartbeat_mono: float = 0.0

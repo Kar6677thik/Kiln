@@ -155,9 +155,9 @@ The "Fields" column lists fields *in addition to* the common ones in §1.2.
 | `app_imported` | INFO | `duration_ms`, `tasks` | after the app import (skipped if inherited through a fork with preload) |
 | `gc_mode_applied` | DEBUG | `phase` (`parent_early`, `before_fork`, `child_early`), `mode`, `enabled`, `threshold`, `frozen` | K3: a `worker.gc_mode` hook ran (also logged by the master and the forkserver) |
 | `gc_reenabled` | WARNING | `layer` (`shim`, `import_flip`, `poll`, `collection_while_disabled`), `module`, `job_id`, `note`, `stack` (top 8 frames) | K3 gcwatch saw the GC turned on (or an automatic collection) while `gc_mode` expects it off; each layer reports once per flip. Also logged by the master/forkserver |
-| `gil_forced_off` | WARNING | `module` | K4: `PYTHON_GIL=0` kept the GIL off despite a legacy extension ("running unsafe on purpose") |
+| `gil_forced_off` | WARNING | `module`, `detected_after_import_of`, `import_chain`, `origin`, `hint` | K4: `PYTHON_GIL=0` kept the GIL off despite a legacy extension ("running unsafe on purpose") |
 | `interp_import_failed` | ERROR | `task`, `error_type`, `error_message` | K4: a module couldn't be imported inside a subinterpreter |
-| `gil_reenabled` | WARNING | `module`, `detected_after_import_of`, `import_chain`, `origin`, `hint` | K4 gilwatch detected the GIL turning on |
+| `gil_reenabled` | WARNING | `module` (the innermost culprit), `detected_after_import_of` (the outermost import), `import_chain` (`a>b>c`), `origin` (the `.so` path), `hint` | K4 gilwatch detected the GIL turning on, on a free-threaded build; logged by the master or the worker, whichever did the import |
 | `job_started` | DEBUG | `job_id`, `attempt`, `task` | |
 | `job_raised` | INFO | `job_id`, `error_type`, `error_message` | the task raised (the traceback goes into the `result` message) |
 | `retire_requested` | INFO | `reason` (`max_jobs`, `max_rss`, `sigterm`, `shutdown`) | |
@@ -216,7 +216,8 @@ Logged by the **master** about its launcher (K2):
   },
   "workers": [
     { "worker_id": 0, "pid": 4310, "gen": 2, "state": "READY", "capacity": 1, "inflight": 1,
-      "jobs_done": 2462, "rss_bytes": 41234432, "last_heartbeat_age_s": 0.4, "uptime_s": 120.1 }
+      "jobs_done": 2462, "rss_bytes": 41234432, "gil_enabled": true,
+      "last_heartbeat_age_s": 0.4, "uptime_s": 120.1 }
   ],
   "worker_deaths": { "retired": 4, "crashed": 0, "killed": 0, "killed_by_master": 0, "suspected_oom": 0 }
 }

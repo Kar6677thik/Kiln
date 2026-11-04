@@ -1,0 +1,22 @@
+import asyncio, time
+async def hello():
+    await asyncio.sleep(0.1)
+    return "hi"
+
+coro = hello()
+type(coro).__name__
+asyncio.run(coro)
+async def three_sleeps():
+    started = time.perf_counter()
+    await asyncio.gather(asyncio.sleep(0.2), asyncio.sleep(0.2), asyncio.sleep(0.2))
+    return round(time.perf_counter() - started, 1)
+
+asyncio.run(three_sleeps())
+async def three_busy():
+    started = time.perf_counter()
+    async def busy():
+        time.sleep(0.2)
+    await asyncio.gather(busy(), busy(), busy())
+    return round(time.perf_counter() - started, 1)
+
+asyncio.run(three_busy())

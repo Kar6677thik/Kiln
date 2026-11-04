@@ -198,3 +198,32 @@
 - **Evidence:** `tests/integration/test_exit_trick.py`; a `PYTHONVERBOSE=1` run showed `# destroy exit_app` with no `__del__` call.
 - **Affects:** K3.
 - **Status:** ✅ corrected
+
+## E-24: Lambdas *can* be submitted to `InterpreterPoolExecutor`
+- **Spec claim:** K4 gate G4.6: "functions submitted to `InterpreterPoolExecutor` must be importable (a lambda fails)".
+- **Correction:** `InterpreterPoolExecutor().submit(lambda: 1)` returns 1 on 3.14.9, 3.15.1 and 3.15.1t. `Interpreter.call` copies *stateless* functions (no closure, no globals) as code, passes *shareable* objects directly, and falls back to pickle for the rest. A closure, a lambda using a module global, or a `threading.Lock` argument fails with `NotShareableError`. A `__main__` function that reads a global is pickled by name, and the subinterpreter re-runs the main script, so it sees the import-time value. The executor's shim design (a module-level function taking JSON strings) still stands, for import-cost and ADR-009 reasons.
+- **Evidence:** [concepts/subinterpreters.md](../concepts/subinterpreters.md) and its snippet.
+- **Affects:** K4.
+- **Status:** ✅ corrected
+
+## E-25: Some stdlib C modules refuse to load in subinterpreters (`_tracemalloc`)
+- **Spec claim:** K4 §5.5 lists C-extension incompatibility as a third-party risk.
+- **Correction:** it happens inside the standard library too. `import tracemalloc` inside a subinterpreter raises `ImportError: module _tracemalloc does not support loading in subinterpreters` (3.15.1). Kiln's own lab tasks imported it indirectly (`kiln/labs/preload.py`), so every job under the `interpreters` executor failed with ImportError until the import was moved inside the one function that uses it. `ctypes` loads fine.
+- **Evidence:** `tests/integration/test_executor_contract.py` (all four executors) and the shim's traceback.
+- **Affects:** K4 (and any app run under the `interpreters` executor).
+- **Status:** ✅ corrected
+
+## E-26: "CPU time" in `labs.burn_cpu` must be the thread's, not the process's
+- **Spec claim:** spec/03 §7: `labs.burn_cpu` runs "for about `ms` of CPU time"; K1 implemented it with `time.process_time()`.
+- **Correction:** `process_time()` counts the CPU of every thread in the process. With 8 threads really running in parallel (3.15t), each job's clock ran about 8× too fast, so it did about 1/8 of the work. The first K4 benchmark showed `threads` going from 48 to 2,423 jobs/s with 8 slots, which is impossible. `burn_cpu` now uses `time.thread_time()`, and accepts `work=N` (fixed work) for comparing builds.
+- **Evidence:** the K4 smoke run (3.15t, 100 jobs per cell); after the fix, 47 → 270 jobs/s from 1 to 8 slots.
+- **Affects:** K1 lab (d) used `burn_cpu` only on 1 thread (unaffected), K4, K9.
+- **Status:** ✅ corrected
+
+## E-27: On the GIL build, *where* a race can happen depends on CPython's switch points
+- **Spec claim:** K4 §5.7: on the GIL build, `racy` loses updates "rarely or never", because `+=` is several bytecodes and a switch is merely improbable.
+- **Correction:** the two halves of `RacyStats.record` behave completely differently on 3.13–3.15 (GIL). `self.count += 1` never lost an update, not even with `sys.setswitchinterval(1e-6)`. `d[k] = d.get(k, 0) + 1` lost hundreds of thousands to millions of updates per trial once each thread ran longer than one 5 ms time slice. CPython only hands the GIL to another thread at specific points in the bytecode, where it runs its periodic "eval breaker" check. In 3.15's `Python/bytecodes.c` these are `JUMP_BACKWARD` and `RESUME` (`_CHECK_PERIODIC`) and the end of most `CALL` instructions (`_CHECK_PERIODIC_AT_END`); `STORE_ATTR` and `BINARY_OP` have none. `+=` on an attribute contains none, while `d.get(...)` is a call, checked as it returns: a thread paused there, before its store, writes back a value 5 ms out of date, wiping out the other threads' work for that whole time slice. "The GIL makes races rare" is true per *instruction*, but one compound statement with a call in the middle can lose a whole time slice of work.
+- **Evidence:** `labs/k4/race_demo.py` (lab K4 (b)), [concepts/data-races.md](../concepts/data-races.md).
+- **Affects:** K4.
+- **Status:** ✅ corrected
+

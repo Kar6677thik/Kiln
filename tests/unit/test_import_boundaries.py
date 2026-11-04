@@ -44,6 +44,7 @@ ALLOWED: dict[str, set[str]] = {
         "kiln.memory",
         "kiln.launch",
         "kiln.labs",
+        "kiln.worker.gilwatch",  # ADR-037: installed before preloading; nothing else of worker
         "kiln.__init__",  # ADR-033: only for __version__
     },
     "kiln.gateway": {"kiln.protocol", "kiln.config", "kiln.bench.records"},

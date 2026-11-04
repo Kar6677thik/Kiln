@@ -1,0 +1,25 @@
+import asyncio, threading, time
+async def answer():
+    await asyncio.sleep(0.01)
+    return 42
+
+asyncio.run(answer())
+loop = asyncio.new_event_loop()
+t = threading.Thread(target=loop.run_forever, name="kiln-loop", daemon=True)
+t.start()
+fut = asyncio.run_coroutine_threadsafe(answer(), loop)
+type(fut).__name__
+fut.result(timeout=1)
+async def in_a_thread():
+    return await asyncio.to_thread(lambda: threading.current_thread().name)
+
+asyncio.run_coroutine_threadsafe(in_a_thread(), loop).result(timeout=1).startswith("asyncio_")
+async def too_slow():
+    async with asyncio.timeout(0.05):
+        await asyncio.sleep(1)
+
+asyncio.run_coroutine_threadsafe(too_slow(), loop).exception(timeout=1)
+loop.call_soon_threadsafe(loop.stop)
+t.join()
+loop.close()
+loop.is_closed()

@@ -36,6 +36,7 @@ class SyncExecutor:
             app: the loaded app whose tasks it runs.
         """
         self.app = app
+        self.name = "sync"
         self.capacity = 1
         self._running = 0
 

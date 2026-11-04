@@ -45,6 +45,7 @@
 | [034](#adr-034) | K1 implementation details | Accepted (implementer, pending learner review) |
 | [035](#adr-035) | K2 implementation details (launchers) | Accepted (implementer, pending learner review) |
 | [036](#adr-036) | K3 implementation details (memory, GC modes, gcwatch) | Accepted (implementer, pending learner review) |
+| [037](#adr-037) | K4 implementation details (executors, gilwatch, benchmark) | Accepted (implementer, pending learner review) |
 
 ---
 
@@ -330,4 +331,21 @@
   10. **Bug fix:** `shutdown_finished duration_ms` was measured from the master's start instead of the start of the shutdown. It is now measured from `shutdown_started`, as spec/06 says. Lab (d) needs it.
   11. **Lab (d), part 2 (forked workers)** reads "what a final collection would cost" from lab (a)'s P3 → P4 step (an explicit `gc_collect(2)` on every worker), rather than running a separate experiment.
   12. **`freeze` freezes once per process, before the first fork.** The first version froze before *every* fork. On 3.15t, `gc.freeze()` writes a bit into every object's header, so re-freezing made the master rewrite pages it already shared with the workers forked earlier. Those workers then each held about 62 MiB of private copies at P0, while the last-forked worker had 3.9 MiB (records in `results/published/K3/cow-refreeze-before-fix/`). On the GIL builds freeze only moves list pointers, and the four workers were identical (3.3–3.4 MiB), so those records stand.
+
+<a id="adr-037"></a>
+## ADR-037: K4 implementation details (executors, gilwatch, benchmark)
+- **Status:** Accepted (implementer, pending learner review)
+- **Decisions:**
+  1. **The Executor protocol keeps K1's shape:** `submit(run, on_done)`, with a callback per job, instead of K4 §5.1's `start(registry, sink)` + `submit(run)`. The per-job `on_done` *is* the result sink. The rules are the same: called exactly once per run, from any thread, and the channel's send is locked. K4 adds `name` to the protocol. This avoided rewriting K1's working code for no behavioural difference.
+  2. **The "ChannelWriter" is K1's `worker/channel.py` `Channel`.** It already encodes outside its lock and sends inside it. The "WorkerCounters" lock is `WorkerState.lock`, taken around count + recycling decision + `retiring` announcement.
+  3. **The interpreters shim takes two more arguments** than §5.5 lists: the main interpreter's `sys.path` (as JSON), because a subinterpreter starts with the default path without `kiln serve`'s additions; and the `labs.enabled` flag, so lab tasks get registered inside it too.
+  4. **`labs.burn_cpu` uses thread CPU time, and accepts `work=N`** (fixed work, errata E-26). The K4 benchmark uses `work=1100` (≈ 20 ms on 3.15), so that both builds do the *same* work and the free-threaded build's single-thread cost stays visible.
+  5. **`tracemalloc` is imported lazily** in `kiln/labs/preload.py` (errata E-25).
+  6. **New lab tasks** `labs.thread_name`, `labs.interp_probe` and `labs.nan` (spec/03 §7 updated), for the executor tests.
+  7. **The master exposes `gil_enabled` per worker** in `stats` (from `ready` and heartbeats), and the benchmark rejects any 3.15t run where it is true (K4 §12).
+  8. **Collateral losses say so.** When a timeout kills a worker, its other in-flight jobs fail as `worker_lost` with "(collateral: another job on this worker timed out…)" in the message.
+  9. **gilwatch also wraps `create_module`,** not only `exec_module`: a C extension's GIL decision is taken while its module object is created (multi-phase init reads the slots then).
+  10. **Benchmark size: 400 jobs per run, 1 warm-up + 5 measured rounds** instead of spec/10's 2,000 jobs and 3 + ≥10. The full spec size would take about 10 hours for the two builds; this takes about 50 minutes. The CVs are reported per cell, and cells above 5% are flagged in the lab report.
+  12. **The master imports `kiln.worker.gilwatch`** (an exception to spec/01's "master and worker never import each other"). K4 §5.8 requires the watch to be installed in the master before the app is preloaded. gilwatch is a leaf module: it imports nothing from Kiln except `logsetup`, inside one function. There is one watch per process, so a forked worker keeps the master's watch rather than installing a second one that would report every flip twice. The import-boundary test allows exactly this.
+  11. **Test locations:** the executor contract suite is `tests/integration/test_executor_contract.py`, and gilwatch's tests are `tests/unit/test_gilwatch.py` (simulated flips, every build) plus `tests/integration/test_gil_reenabler.py` (real extensions; needs 3.15t and a C compiler). There is no `tests/worker/` folder (spec/09 §2 layout).
 

@@ -1,0 +1,4 @@
+main thread is 'MainThread'
+t1: thread name='worker-1', same pid as main
+t2: thread name='worker-2', same pid as main
+the parent's list has 2 entries: the child's append went to its own copy

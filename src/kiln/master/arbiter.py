@@ -68,6 +68,7 @@ from kiln.protocol.messages import (
     parse_worker_message,
     request_id_of,
 )
+from kiln.worker import gilwatch
 
 log = logging.getLogger(__name__)
 
@@ -324,6 +325,8 @@ class Arbiter:
             memory_events="readable" if events else "unavailable",
         )
         method = self.supervisor.launcher.name
+        # WHY (K4 Â§5.8): before the app is preloaded, so its imports are watched.
+        gilwatch.install_for_process(log)
         self._apply_k3_settings(method)
         if cfg.app.preload and method == "spawn":
             # WHY (K2 spec §5.3): a spawned worker is a fresh interpreter and imports the app
@@ -1234,9 +1237,10 @@ class Arbiter:
         if isinstance(parsed, Heartbeat):
             handle.last_heartbeat_mono = now
             handle.rss_bytes = parsed.rss_bytes
+            handle.gil_enabled = parsed.gil_enabled  # K4: can flip on after a legacy import
         elif isinstance(parsed, Ready):
             gil = bool(parsed.python.get("gil_enabled", True))
-            self.supervisor.on_ready(handle, parsed.capacity, parsed.manifest, gil)
+            self.supervisor.on_ready(handle, parsed.capacity, parsed.manifest, gil, parsed.executor)
             self.dispatch_soon()
         elif isinstance(parsed, Result):
             self._on_result(handle, parsed)
@@ -1330,6 +1334,7 @@ class Arbiter:
                 "inflight": len(h.inflight),
                 "jobs_done": h.jobs_done,
                 "rss_bytes": h.rss_bytes,
+                "gil_enabled": h.gil_enabled,
                 "last_heartbeat_age_s": round(now - h.last_heartbeat_mono, 2),
                 "uptime_s": round(now - h.launched_mono, 2),
             }

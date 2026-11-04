@@ -19,6 +19,7 @@ MILESTONE
 """
 
 import logging
+import os
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal
@@ -253,3 +254,32 @@ def children_of(pid: int, proc_root: Path = PROC) -> list[int]:
         if int(fields[1]) == pid:
             children.add(int(stat.parent.name))
     return sorted(children)
+
+
+def read_cpu_times(pid: int | Literal["self"], proc_root: Path = PROC) -> float:
+    """Total CPU seconds (user + system) a process has used so far, from /proc/<pid>/stat.
+
+    Why:
+        CPU utilization = Δ CPU seconds / Δ wall seconds; 1.0 means one core busy. K4's lab
+        uses it to show whether threads really ran in parallel (more than 1.0) or took turns.
+
+    Args:
+        pid: a process id, or "self".
+        proc_root: where /proc is.
+
+    Returns:
+        utime + stime, in seconds.
+
+    Raises:
+        ProcessGone: the process doesn't exist.
+    """
+    try:
+        text = (proc_root / str(pid) / "stat").read_text()
+    except (FileNotFoundError, ProcessLookupError) as error:
+        raise ProcessGone(f"process {pid} is gone") from error
+    # WHY: field 2 (the command name) may contain spaces and ")"; split after the LAST ")".
+    # Then utime and stime are fields 14 and 15, i.e. indexes 11 and 12 of what follows.
+    fields = text.rsplit(")", 1)[1].split()
+    # GOTCHA: the values are in clock ticks, not seconds; SC_CLK_TCK says how many per second.
+    ticks = os.sysconf("SC_CLK_TCK")
+    return (int(fields[11]) + int(fields[12])) / ticks

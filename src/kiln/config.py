@@ -22,6 +22,7 @@ MILESTONE
 """
 
 import json
+import sys
 import tomllib
 from collections.abc import Mapping
 from dataclasses import asdict, dataclass
@@ -81,7 +82,7 @@ RULES: dict[str, Rule] = {
     "start.method": Rule("str", "fork", choices=("fork", "spawn", "forkserver")),
     "start.forkserver_preload": Rule("list", ["kiln"]),
     "worker.executor": Rule("str", "sync", choices=("sync", "threads", "interpreters", "asyncio")),
-    "worker.executor_concurrency": Rule("int", 8, minimum=1),  # NOT YET USED (K4)
+    "worker.executor_concurrency": Rule("int", 8, minimum=1),
     "worker.heartbeat_interval_s": Rule("float", 1.0, strictly_positive=True),
     "worker.heartbeat_timeout_s": Rule("float", 10.0, strictly_positive=True),
     "worker.max_jobs": Rule("int", 0, minimum=0),
@@ -96,7 +97,7 @@ RULES: dict[str, Rule] = {
     "queue.retry_after_s": Rule("float", 1.0, minimum=0),
     "jobs.default_timeout_s": Rule("float", 30.0, strictly_positive=True),
     "jobs.default_max_attempts": Rule("int", 1, minimum=1),
-    "jobs.cancel_grace_s": Rule("float", 2.0, minimum=0),  # NOT YET USED (K4)
+    "jobs.cancel_grace_s": Rule("float", 2.0, minimum=0),
     "jobs.result_ttl_s": Rule("float", 600.0, strictly_positive=True),
     "jobs.max_retained": Rule("int", 200_000, minimum=1),
     "protocol.max_frame_bytes": Rule("int", 1_048_576, minimum=64),
@@ -464,6 +465,12 @@ def _check_cross_field(values: dict[str, object]) -> list[str]:
         Problems found.
     """
     problems = []
+    if values["worker.executor"] == "interpreters" and sys.version_info < (3, 14):
+        version = ".".join(str(n) for n in sys.version_info[:3])
+        problems.append(
+            'worker.executor = "interpreters" needs Python ≥ 3.14 '
+            f'(this is {version}). Use "threads" or a newer interpreter.'
+        )
     interval = values["worker.heartbeat_interval_s"]
     timeout = values["worker.heartbeat_timeout_s"]
     if isinstance(interval, float) and isinstance(timeout, float) and timeout <= interval:

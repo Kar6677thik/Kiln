@@ -24,7 +24,6 @@ import math
 import random
 import sys
 import time
-import tracemalloc
 from dataclasses import dataclass, field
 from typing import Literal
 
@@ -240,6 +239,10 @@ def build_graph(mb: int, *, seed: int = 0, composition: Composition = "mortal") 
     Returns:
         The graph (traced_bytes = bytes per sampled record × number of records).
     """
+    # WHY: imported here, not at the top: the _tracemalloc C module refuses to load in
+    # subinterpreters (K4), and the lab tasks importing this module run in them.
+    import tracemalloc
+
     # WHY (noqa S311): reproducible test data, not cryptography.
     rng = random.Random(seed)  # noqa: S311
     graph = PreloadGraph(composition=composition, target_mb=mb)

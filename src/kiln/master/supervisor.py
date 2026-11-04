@@ -193,16 +193,25 @@ def read_oom_kill_count(events_path: Path | None) -> int | None:
     return None
 
 
-def lost_error(death: Death) -> dict[str, object]:
+def lost_error(death: Death, kill_reason: str | None = None) -> dict[str, object]:
     """The error details recorded on a job whose worker died.
+
+    Why:
+        With several jobs per worker (K4), a timeout kills the whole worker, and the *other*
+        jobs on it are lost as collateral; their message says so, so nobody hunts for a bug
+        in a job that did nothing wrong (spec/04 §5.3).
 
     Args:
         death: how the worker died.
+        kill_reason: why the master killed it, if it did.
 
     Returns:
         {"type", "message", "traceback"} for JobTable.fail_attempt.
     """
-    return {"type": "WorkerLost", "message": death.short(), "traceback": ""}
+    message = death.short()
+    if kill_reason == "job_timeout":
+        message += " (collateral: another job on this worker timed out and the worker was killed)"
+    return {"type": "WorkerLost", "message": message, "traceback": ""}
 
 
 def backoff_delay(consecutive_failures: int) -> float:
@@ -497,7 +506,12 @@ class Supervisor:
     # --- worker messages ---------------------------------------------------------------------
 
     def on_ready(
-        self, handle: WorkerHandle, capacity: int, manifest: dict[str, object], gil_enabled: bool
+        self,
+        handle: WorkerHandle,
+        capacity: int,
+        manifest: dict[str, object],
+        gil_enabled: bool,
+        executor: str = "sync",
     ) -> None:
         """A worker finished booting: it can take jobs now.
 
@@ -510,12 +524,15 @@ class Supervisor:
             capacity: its slots.
             manifest: its task manifest.
             gil_enabled: from the ready message (for the log).
+            executor: the worker's executor name (asyncio workers get a later hard kill).
         """
         now = time.monotonic()
         self.arb.timers.cancel(handle.deadline_timer)
         handle.deadline_timer = None
         handle.state = WorkerState.READY
         handle.capacity = capacity
+        handle.executor = executor
+        handle.gil_enabled = gil_enabled
         handle.manifest = manifest
         handle.last_heartbeat_mono = now
         self.boot_failures = 0
@@ -529,7 +546,7 @@ class Supervisor:
             gen=handle.generation,
             pid_worker=handle.pid,
             capacity=capacity,
-            executor="sync",
+            executor=executor,
             boot_ms=round((now - handle.launched_mono) * 1000, 2),
             gil_enabled=gil_enabled,
             tasks=len(manifest.get("tasks", {})),  # type: ignore[arg-type]  # WHY: manifest["tasks"] is a dict
@@ -810,7 +827,7 @@ class Supervisor:
                 job_id,
                 attempt,
                 "worker_lost",
-                lost_error(death),
+                lost_error(death, handle.kill_reason),
                 now,
                 wall,
             )

@@ -1,0 +1,52 @@
+{
+  "config": {},
+  "experiment": "race",
+  "git": {
+    "commit": "62e1217",
+    "dirty": true
+  },
+  "host": {
+    "cpu_model": "Intel(R) Core(TM) Ultra 5 225H",
+    "cpus": 14,
+    "kernel": "6.6.87.2-microsoft-standard-WSL2",
+    "mem_total_bytes": 7751778304,
+    "notes": "source=9p",
+    "pinned_cpus": null,
+    "wsl": true
+  },
+  "interpreter": {
+    "build": "gil",
+    "executable": "/home/Megatron/.cache/kiln/venvs/py3.13/bin/python",
+    "gil_enabled_at_end": true,
+    "implementation": "cpython",
+    "jit_enabled": null,
+    "version": "3.13.17"
+  },
+  "metrics": {
+    "duration": {
+      "unit": "s",
+      "value": 0.3111
+    },
+    "lost_dict_updates": {
+      "unit": "count",
+      "value": 0
+    },
+    "lost_updates": {
+      "unit": "count",
+      "value": 0
+    }
+  },
+  "milestone": "K4",
+  "notes": "",
+  "params": {
+    "gil": true,
+    "impl": "locked",
+    "iters": 200000,
+    "threads": 8
+  },
+  "repeat_index": 9,
+  "run_id": "20261104T131405Z-py3.13-9c9c",
+  "schema_version": 1,
+  "started_at": "2026-11-04T13:14:05.351Z",
+  "variant": "locked-t8"
+}

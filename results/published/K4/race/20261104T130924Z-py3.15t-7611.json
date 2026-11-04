@@ -1,0 +1,52 @@
+{
+  "config": {},
+  "experiment": "race",
+  "git": {
+    "commit": "62e1217",
+    "dirty": true
+  },
+  "host": {
+    "cpu_model": "Intel(R) Core(TM) Ultra 5 225H",
+    "cpus": 14,
+    "kernel": "6.6.87.2-microsoft-standard-WSL2",
+    "mem_total_bytes": 7751778304,
+    "notes": "source=9p",
+    "pinned_cpus": null,
+    "wsl": true
+  },
+  "interpreter": {
+    "build": "freethreaded",
+    "executable": "/home/Megatron/.cache/kiln/venvs/py3.15t/bin/python",
+    "gil_enabled_at_end": false,
+    "implementation": "cpython",
+    "jit_enabled": false,
+    "version": "3.15.1"
+  },
+  "metrics": {
+    "duration": {
+      "unit": "s",
+      "value": 1.1605
+    },
+    "lost_dict_updates": {
+      "unit": "count",
+      "value": 1207667
+    },
+    "lost_updates": {
+      "unit": "count",
+      "value": 163852
+    }
+  },
+  "milestone": "K4",
+  "notes": "",
+  "params": {
+    "gil": false,
+    "impl": "racy",
+    "iters": 200000,
+    "threads": 8
+  },
+  "repeat_index": 3,
+  "run_id": "20261104T130924Z-py3.15t-7611",
+  "schema_version": 1,
+  "started_at": "2026-11-04T13:09:24.237Z",
+  "variant": "racy-t8"
+}
