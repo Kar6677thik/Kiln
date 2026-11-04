@@ -1,0 +1,7 @@
+first import:
+  noisy.py is executing its top-level code
+second import (nothing printed, it comes from sys.modules):
+same object both times? True
+cached in sys.modules? True
+after deleting it from sys.modules, importing runs the file again:
+  noisy.py is executing its top-level code

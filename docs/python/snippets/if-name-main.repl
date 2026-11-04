@@ -1,0 +1,9 @@
+__name__
+import json
+json.__name__
+import runpy, tempfile, pathlib
+folder = tempfile.mkdtemp()
+path = pathlib.Path(folder) / "tool.py"
+_ = path.write_text("print('tool.py says __name__ is', repr(__name__))\nif __name__ == '__main__':\n    print('...and the guarded block runs')\n")
+_ = runpy.run_path(str(path), run_name="__main__")
+_ = runpy.run_path(str(path), run_name="tool")

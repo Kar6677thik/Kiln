@@ -32,8 +32,8 @@ Status: ⏳ planned · ✍️ written · ✅ reviewed by the learner
 | 20 | [`slots-and-frozen-dataclasses`](slots-and-frozen-dataclasses.md), [`collections-deque`](collections-deque.md), [`heapq`](heapq.md), [`typing-protocol`](typing-protocol.md) | K1 | ✍️ |
 | 21 | [`threading-basics`](threading-basics.md), [`signal-module`](signal-module.md), [`os-module`](os-module.md), [`socket-module`](socket-module.md), [`selectors-module`](selectors-module.md) | K1 | ✍️ |
 | 22 | [`uuid`](uuid.md), [`time-monotonic`](time-monotonic.md), [`hypothesis-basics`](hypothesis-basics.md), [`tomllib`](tomllib.md), [`importlib`](importlib.md), [`inspect`](inspect.md), [`asyncio-first-look`](asyncio-first-look.md) | K1 | ✍️ |
-| 23 | `if-name-main`, `pickle-and-reduce`, `runpy`, `closures`, `functools-partial` | K2 | ⏳ |
-| 24 | `ast-module`, `symtable-module`, `multiprocessing-basics` | K2 | ⏳ |
+| 23 | [`if-name-main`](if-name-main.md), [`pickle-and-reduce`](pickle-and-reduce.md), [`runpy`](runpy.md), [`closures`](closures.md), [`functools-partial`](functools-partial.md) | K2 | ✍️ |
+| 24 | [`ast-module`](ast-module.md), [`symtable-module`](symtable-module.md), [`multiprocessing-basics`](multiprocessing-basics.md) | K2 | ✍️ |
 | 25 | `gc-module`, `atexit`, `sys-getrefcount`, `monkeypatching` | K3 | ⏳ |
 | 26 | `import-hooks-meta-path`, `ctypes-basics`, `traceback-module`, `tracemalloc-basics` | K3 | ⏳ |
 | 27 | `threading`, `concurrent-futures`, `async-await-basics`, `asyncio-run`, `locks` | K4 | ⏳ |
@@ -52,7 +52,7 @@ Status: ⏳ planned · ✍️ written · ✅ reviewed by the learner
 | `assert` | [pytest-basics](pytest-basics.md) | [`tests/snippets/test_snippets.py:100`](../../tests/snippets/test_snippets.py) | K0 |
 | `async-await` | [asyncio-first-look](asyncio-first-look.md) | [`src/kiln/bench/load.py:118`](../../src/kiln/bench/load.py) | K1 |
 | `classes-and-objects` | [classes-and-objects](classes-and-objects.md) | [`src/kiln/doctor.py:55`](../../src/kiln/doctor.py) | K0 |
-| `closures` | [decorators](decorators.md) (a nested function remembers outer names; K2 adds a full closures note) | [`src/kiln/app.py:127`](../../src/kiln/app.py) | K1 |
+| `closures` | [closures](closures.md) (first met in [decorators](decorators.md)) | [`src/kiln/app.py:127`](../../src/kiln/app.py) | K1 |
 | `comprehensions` | [comprehensions](comprehensions.md) | [`src/kiln/bench/records.py:392`](../../src/kiln/bench/records.py) | K0 |
 | `context-managers` | [context-managers](context-managers.md) | [`src/kiln/doctor.py:154`](../../src/kiln/doctor.py) | K0 |
 | `dataclasses` | [dataclasses](dataclasses.md) | [`src/kiln/doctor.py:76`](../../src/kiln/doctor.py) | K0 |

@@ -1,0 +1,310 @@
+{
+  "config": {},
+  "experiment": "calibrate",
+  "git": {
+    "commit": "384a69a",
+    "dirty": true
+  },
+  "host": {
+    "cpu_model": "Intel(R) Core(TM) Ultra 5 225H",
+    "cpus": 14,
+    "kernel": "6.6.87.2-microsoft-standard-WSL2",
+    "mem_total_bytes": 7751778304,
+    "notes": "source=9p",
+    "pinned_cpus": null,
+    "wsl": true
+  },
+  "interpreter": {
+    "build": "gil",
+    "executable": "/home/Megatron/.cache/kiln/venvs/py3.15/bin/python",
+    "gil_enabled_at_end": true,
+    "implementation": "cpython",
+    "jit_enabled": false,
+    "version": "3.15.1"
+  },
+  "metrics": {
+    "fn_FA001": {
+      "unit": "count",
+      "value": 0
+    },
+    "fn_FA002": {
+      "unit": "count",
+      "value": 0
+    },
+    "fn_FA003": {
+      "unit": "count",
+      "value": 0
+    },
+    "fn_FA004": {
+      "unit": "count",
+      "value": 0
+    },
+    "fn_FA005": {
+      "unit": "count",
+      "value": 0
+    },
+    "fn_FA006": {
+      "unit": "count",
+      "value": 0
+    },
+    "fn_FA007": {
+      "unit": "count",
+      "value": 0
+    },
+    "fn_FA008": {
+      "unit": "count",
+      "value": 0
+    },
+    "fp_FA001": {
+      "unit": "count",
+      "value": 0
+    },
+    "fp_FA002": {
+      "unit": "count",
+      "value": 0
+    },
+    "fp_FA003": {
+      "unit": "count",
+      "value": 0
+    },
+    "fp_FA004": {
+      "unit": "count",
+      "value": 0
+    },
+    "fp_FA005": {
+      "unit": "count",
+      "value": 0
+    },
+    "fp_FA006": {
+      "unit": "count",
+      "value": 0
+    },
+    "fp_FA007": {
+      "unit": "count",
+      "value": 0
+    },
+    "fp_FA008": {
+      "unit": "count",
+      "value": 0
+    },
+    "precision_FA001": {
+      "unit": "ratio",
+      "value": 1.0
+    },
+    "precision_FA002": {
+      "unit": "ratio",
+      "value": 1.0
+    },
+    "precision_FA003": {
+      "unit": "ratio",
+      "value": 1.0
+    },
+    "precision_FA004": {
+      "unit": "ratio",
+      "value": 1.0
+    },
+    "precision_FA005": {
+      "unit": "ratio",
+      "value": 1.0
+    },
+    "precision_FA006": {
+      "unit": "ratio",
+      "value": 1.0
+    },
+    "precision_FA007": {
+      "unit": "ratio",
+      "value": 1.0
+    },
+    "precision_FA008": {
+      "unit": "ratio",
+      "value": 1.0
+    },
+    "real_cases_confirmed": {
+      "unit": "count",
+      "value": 5
+    },
+    "real_cases_detected": {
+      "unit": "count",
+      "value": 5
+    },
+    "recall_FA001": {
+      "unit": "ratio",
+      "value": 1.0
+    },
+    "recall_FA002": {
+      "unit": "ratio",
+      "value": 1.0
+    },
+    "recall_FA003": {
+      "unit": "ratio",
+      "value": 1.0
+    },
+    "recall_FA004": {
+      "unit": "ratio",
+      "value": 1.0
+    },
+    "recall_FA005": {
+      "unit": "ratio",
+      "value": 1.0
+    },
+    "recall_FA006": {
+      "unit": "ratio",
+      "value": 1.0
+    },
+    "recall_FA007": {
+      "unit": "ratio",
+      "value": 1.0
+    },
+    "recall_FA008": {
+      "unit": "ratio",
+      "value": 1.0
+    },
+    "synthetic_fn_FA001": {
+      "unit": "count",
+      "value": 0
+    },
+    "synthetic_fn_FA002": {
+      "unit": "count",
+      "value": 0
+    },
+    "synthetic_fn_FA003": {
+      "unit": "count",
+      "value": 0
+    },
+    "synthetic_fn_FA004": {
+      "unit": "count",
+      "value": 0
+    },
+    "synthetic_fn_FA005": {
+      "unit": "count",
+      "value": 0
+    },
+    "synthetic_fn_FA006": {
+      "unit": "count",
+      "value": 0
+    },
+    "synthetic_fn_FA007": {
+      "unit": "count",
+      "value": 0
+    },
+    "synthetic_fn_FA008": {
+      "unit": "count",
+      "value": 0
+    },
+    "synthetic_fp_FA001": {
+      "unit": "count",
+      "value": 0
+    },
+    "synthetic_fp_FA002": {
+      "unit": "count",
+      "value": 0
+    },
+    "synthetic_fp_FA003": {
+      "unit": "count",
+      "value": 0
+    },
+    "synthetic_fp_FA004": {
+      "unit": "count",
+      "value": 0
+    },
+    "synthetic_fp_FA005": {
+      "unit": "count",
+      "value": 0
+    },
+    "synthetic_fp_FA006": {
+      "unit": "count",
+      "value": 0
+    },
+    "synthetic_fp_FA007": {
+      "unit": "count",
+      "value": 0
+    },
+    "synthetic_fp_FA008": {
+      "unit": "count",
+      "value": 0
+    },
+    "synthetic_tp_FA001": {
+      "unit": "count",
+      "value": 7
+    },
+    "synthetic_tp_FA002": {
+      "unit": "count",
+      "value": 6
+    },
+    "synthetic_tp_FA003": {
+      "unit": "count",
+      "value": 5
+    },
+    "synthetic_tp_FA004": {
+      "unit": "count",
+      "value": 4
+    },
+    "synthetic_tp_FA005": {
+      "unit": "count",
+      "value": 5
+    },
+    "synthetic_tp_FA006": {
+      "unit": "count",
+      "value": 5
+    },
+    "synthetic_tp_FA007": {
+      "unit": "count",
+      "value": 5
+    },
+    "synthetic_tp_FA008": {
+      "unit": "count",
+      "value": 6
+    },
+    "tp_FA001": {
+      "unit": "count",
+      "value": 8
+    },
+    "tp_FA002": {
+      "unit": "count",
+      "value": 7
+    },
+    "tp_FA003": {
+      "unit": "count",
+      "value": 6
+    },
+    "tp_FA004": {
+      "unit": "count",
+      "value": 4
+    },
+    "tp_FA005": {
+      "unit": "count",
+      "value": 6
+    },
+    "tp_FA006": {
+      "unit": "count",
+      "value": 6
+    },
+    "tp_FA007": {
+      "unit": "count",
+      "value": 5
+    },
+    "tp_FA008": {
+      "unit": "count",
+      "value": 7
+    }
+  },
+  "milestone": "K2",
+  "notes": "[{\"case\": \"fsl-pyfeeds\", \"must_fire\": 1, \"found\": 1, \"confirmed\": true, \"fork\": \"ok\", \"forkserver\": \"ok\", \"spawn\": \"ok\", \"expected_behaviour\": {\"fork\": \"ok\", \"forkserver\": \"differs\", \"spawn\": \"differs\"}}, {\"case\": \"git-repo-mock\", \"must_fire\": 1, \"found\": 1, \"confirmed\": true, \"fork\": \"ok\", \"forkserver\": \"ok\", \"spawn\": \"ok\", \"expected_behaviour\": {\"fork\": \"ok\", \"forkserver\": \"differs\", \"spawn\": \"differs\"}}, {\"case\": \"krb5-t_otp\", \"must_fire\": 2, \"found\": 2, \"confirmed\": true, \"fork\": \"ok\", \"forkserver\": \"ok\", \"spawn\": \"ok\", \"expected_behaviour\": {\"fork\": \"ok\", \"forkserver\": \"differs\", \"spawn\": \"differs\"}}, {\"case\": \"oslo-lockutils\", \"must_fire\": 1, \"found\": 1, \"confirmed\": true, \"fork\": \"ok\", \"forkserver\": \"exception:PicklingError\", \"spawn\": \"exception:PicklingError\", \"expected_behaviour\": {\"fork\": \"ok\", \"forkserver\": \"differs\", \"spawn\": \"differs\"}}, {\"case\": \"pexpect-context\", \"must_fire\": 1, \"found\": 1, \"confirmed\": true, \"fork\": \"ok\", \"forkserver\": \"ok\", \"spawn\": \"ok\", \"expected_behaviour\": {\"fork\": \"ok\", \"forkserver\": \"same\", \"spawn\": \"differs\"}}]",
+  "params": {
+    "rules": [
+      "FA001",
+      "FA002",
+      "FA003",
+      "FA004",
+      "FA005",
+      "FA006",
+      "FA007",
+      "FA008"
+    ]
+  },
+  "repeat_index": 0,
+  "run_id": "20261104T094517Z-py3.15-9b3b",
+  "schema_version": 1,
+  "started_at": "2026-11-04T09:45:17.839Z",
+  "variant": "corpus"
+}

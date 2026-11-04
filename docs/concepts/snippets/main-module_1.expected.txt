@@ -1,0 +1,3 @@
+top-level code running, __name__ = '__main__'
+top-level code running, __name__ = '__mp_main__'
+in the child, work() runs; this module is '__mp_main__'

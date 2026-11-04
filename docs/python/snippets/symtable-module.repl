@@ -1,0 +1,12 @@
+import symtable
+code = "LIMIT = 5\ndef outer():\n    seen = []\n    def inner(x):\n        global LIMIT\n        seen.append(x)\n        return x < LIMIT\n    return inner\n"
+top = symtable.symtable(code, "<demo>", "exec")
+[child.get_name() for child in top.get_children()]
+outer = next(c for c in top.get_children() if c.get_name() == "outer")
+inner = next(c for c in outer.get_children() if c.get_name() == "inner")
+str(inner.get_type()), inner.get_name()
+inner.get_frees()
+inner.lookup("LIMIT").is_declared_global()
+inner.lookup("seen").is_free()
+inner.lookup("x").is_parameter()
+outer.lookup("seen").is_local()

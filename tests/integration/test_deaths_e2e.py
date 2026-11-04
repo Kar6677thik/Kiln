@@ -62,8 +62,14 @@ def test_broken_app_gives_up_with_exit_code_4(kiln_server: Start) -> None:
     assert server.events("boot_failure_limit_reached")
 
 
-def test_preload_failure_exits_4_immediately(kiln_server: Start) -> None:
-    """With app.preload=true (the default), a broken app is caught in the master, before forking."""
+def test_preload_failure_exits_4_immediately(kiln_server: Start, start_method: str) -> None:
+    """With app.preload=true (the default), a broken app is caught before any worker starts.
+
+    Under fork the master preloads it; under forkserver the server does (and fails to start).
+    Under spawn preload is ignored, so this case doesn't apply.
+    """
+    if start_method == "spawn":
+        pytest.skip("app.preload is ignored under spawn (K2 spec §5.3)")
     server = kiln_server(env=FAST, wait=False, app="examples.nope:app")
     assert server.wait_exit(timeout=15) == 4
     assert not server.events("worker_spawned")

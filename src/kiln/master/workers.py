@@ -63,6 +63,8 @@ class WorkerHandle:
     kill_reason: str | None = None
     deadline_timer: int | None = None
     manifest: dict[str, object] = field(default_factory=dict)
+    pidfd: int | None = None  # K2: forkserver workers, for orphan detection (spec/04 §6)
+    orphan: bool = False  # K2: its forkserver died; only the pidfd tells us when it exits
 
     @property
     def free_slots(self) -> int:
@@ -95,8 +97,22 @@ class WorkerTable:
             handle: the new worker.
         """
         self.by_id[handle.worker_id] = handle
-        self.by_pid[handle.pid] = handle
+        if handle.pid:  # WHY: pid 0 means "a forkserver hasn't reported it yet" (set_pid)
+            self.by_pid[handle.pid] = handle
         self.by_fd[handle.conn.fileno()] = handle
+
+    def set_pid(self, handle: WorkerHandle, pid: int) -> None:
+        """Record the pid of a worker launched through the forkserver.
+
+        Why:
+            The forkserver reports the pid after the launch, in a `spawned` message.
+
+        Args:
+            handle: the pending worker.
+            pid: its pid.
+        """
+        handle.pid = pid
+        self.by_pid[pid] = handle
 
     def remove(self, handle: WorkerHandle) -> None:
         """Stop tracking a worker (after it was reaped).

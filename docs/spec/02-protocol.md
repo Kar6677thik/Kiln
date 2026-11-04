@@ -146,12 +146,13 @@ They use the same framing. There's no `req_id`, except on `debug`/`debug_reply`.
 
 | Direction | `type` | Fields | Notes |
 |---|---|---|---|
-| m → fs | `spawn_worker` | `worker_id`, `generation`, `worker_config` (dict) | **plus 1 file descriptor**, the worker's end of its socketpair, sent with `socket.send_fds` in the same `sendmsg` call |
+| fs → m | `ready` | `pid`, `preload` (list of module names), `preload_ms` | the first message after start; the master waits for it (bounded by `master.boot_timeout_s`) before launching workers. A preload failure sends `boot_failed` (with `error`) instead |
+| m → fs | `spawn_worker` | `worker_id`, `generation` | **plus 1 file descriptor**, the worker's end of its socketpair, sent with `socket.send_fds` in the same `sendmsg` call. The config isn't repeated here: the forkserver received it once, as `--config-json` on its command line, and the config can't change during the master's life ([ADR-035](../decisions.md#adr-035)) |
 | fs → m | `spawned` | `worker_id`, `pid` | |
 | fs → m | `child_exit` | `pid`, `wait_status` (the raw int from `waitpid`) | the master decodes it exactly as if it had reaped the child itself |
 | m → fs | `shutdown` | — | the forkserver exits once it has no children left |
 
-**fd passing gotcha:** the fd travels in the *ancillary data* of `sendmsg`. Kiln sends the JSON frame in the **same** `sendmsg` call as the fd. On the forkserver side, `recv_fds` is used for the 4-byte header read, and the fd list is attached to the frame that follows. K2's primer `docs/concepts/fd-passing.md` must explain this in detail.
+**fd passing gotcha:** the fd travels in the *ancillary data* of `sendmsg`. Kiln sends the JSON frame in the **same** `sendmsg` call as the fd. On the forkserver side, every read uses `socket.recv_fds`, and any fds that arrive are appended to an **fd FIFO**; each decoded `spawn_worker` frame takes the oldest fd from it. Because the fd is sent together with (never after) its frame, the FIFO always holds the fd by the time its frame is decoded. K2's primer `docs/concepts/fd-passing.md` must explain this in detail.
 
 ## 5. Gateway HTTP API (K5)
 

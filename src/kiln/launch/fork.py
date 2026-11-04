@@ -8,7 +8,7 @@ WHY THIS MODULE EXISTS
     output. This module does the fork and the clean-up, step by step (K1 spec §5.7).
 
 HOW IT FITS
-    master/supervisor.py ──fork_worker(...)──▶ (pid, master_end_of_socketpair)
+    master/supervisor.py ──ForkLauncher.launch(spec)──▶ fork_child(spec) ──▶ pid
                            child: close inherited fds ──▶ worker/main.run_worker() ──▶ os._exit
 
 READ FIRST
@@ -17,18 +17,17 @@ READ FIRST
     docs/python/os-module.md
 
 MILESTONE
-    Introduced in K1 (as a plain function; K2 extracts a Launcher protocol).
+    Introduced in K1; K2 put it behind the Launcher protocol (launch/base.py) and shares
+    fork_child() with the forkserver.
 """
 
 import os
 import socket
 import sys
 import threading
-from collections.abc import Sequence
 
 from kiln import logsetup
-from kiln.app import App
-from kiln.config import Config
+from kiln.launch.base import Launched, LauncherEvent, Pending, WorkerLaunchSpec
 from kiln.worker.main import finalize_and_exit, run_worker
 
 
@@ -42,98 +41,138 @@ class ForkWithThreadsError(AssertionError):
     """
 
 
-def fork_worker(
-    *,
-    worker_id: int,
-    generation: int,
-    config: Config,
-    app: App | None,
-    close_in_child: Sequence[int],
-) -> tuple[int, socket.socket]:
-    """Fork one worker; return its pid and the master's end of its channel.
+def fork_child(spec: WorkerLaunchSpec) -> int:
+    """Fork one worker that will use `spec.channel_child` as its channel; return its pid.
 
     Why:
-        After this returns, the master holds one end of a socketpair and the worker holds the
-        other: a private, already-connected line between them (spec/01 §3).
+        Shared by the fork launcher (in the master) and the forkserver (in the server process):
+        both create workers the same way, with the same clean-up in the child.
 
     Args:
-        worker_id: the new worker's id.
-        generation: its reload generation.
-        config: the configuration (the child gets its own copy by fork).
-        app: the preloaded app, or None if the worker should import it.
-        close_in_child: fds the child must close: the listener, client connections, other
-            workers' channels and the signal pipe (spec/04 §6 rule 1).
+        spec: what to start; close_in_child lists the inherited fds the child must close.
 
     Returns:
-        (child pid, master's socket).
+        The child's pid (in the parent; the child never returns).
 
     Raises:
-        ForkWithThreadsError: the master has more than one thread.
+        ForkWithThreadsError: the calling process has more than one thread.
     """
-    # INVARIANT: the master is single-threaded (ADR-006, docs/concepts/fork-and-threads.md).
+    # INVARIANT: the forking process is single-threaded (ADR-006,
+    # docs/concepts/fork-and-threads.md).
     if threading.active_count() != 1:
         raise ForkWithThreadsError(
-            f"master has {threading.active_count()} threads at fork time; "
+            f"{threading.active_count()} threads at fork time; "
             "see docs/concepts/fork-and-threads.md"
         )
-    # Step 1: the private channel. Each end is a full socket; one per process after the fork.
-    parent_sock, child_sock = socket.socketpair(socket.AF_UNIX, socket.SOCK_STREAM)
-    # Step 2. GOTCHA: anything still sitting in a buffer is *copied* into the child and then
-    # printed by both processes. Flush first.
+    # GOTCHA: anything still sitting in a buffer is *copied* into the child and then printed by
+    # both processes. Flush first.
     sys.stdout.flush()
     sys.stderr.flush()
     logsetup.flush_all()
-    # Step 3. CONCEPT(fork): after this line there are TWO processes running this same code.
+    # CONCEPT(fork): after this line there are TWO processes running this same code.
     # The parent gets the child's pid; the child gets 0.
     # SYSCALL: os.fork → fork(2) (clone(2) on Linux); see 'man 2 fork'.
     pid = os.fork()
     if pid == 0:
-        _child(child_sock, parent_sock, worker_id, generation, config, app, close_in_child)
-    # Step 5 (parent): close the child's end, which now belongs to the child process.
-    child_sock.close()
-    return pid, parent_sock
+        _child(spec)
+    return pid
 
 
-def _child(
-    child_sock: socket.socket,
-    parent_sock: socket.socket,
-    worker_id: int,
-    generation: int,
-    config: Config,
-    app: App | None,
-    close_in_child: Sequence[int],
-) -> None:
+class ForkLauncher:
+    """Start workers by forking the master (the K1 method, now behind the Launcher protocol).
+
+    Why:
+        The fastest start method: the child is a copy of the master, preloaded app included,
+        sharing memory pages through copy-on-write (K3).
+    """
+
+    name = "fork"
+    reaps_children = True
+    pid = 0  # WHY: no helper process
+
+    def start(self) -> None:
+        """Nothing to prepare."""
+
+    def launch(self, spec: WorkerLaunchSpec) -> Launched | Pending:
+        """Fork one worker.
+
+        Args:
+            spec: what to start.
+
+        Returns:
+            Launched with the pid.
+        """
+        return Launched(fork_child(spec))
+
+    def selectable(self) -> socket.socket | None:
+        """Fork has no socket of its own.
+
+        Returns:
+            None.
+        """
+        return None
+
+    def on_readable(self) -> list[LauncherEvent]:
+        """Never called.
+
+        Returns:
+            An empty list.
+        """
+        return []
+
+    def owns_pid(self, pid: int) -> bool:
+        """Fork has no helper process.
+
+        Args:
+            pid: a reaped pid.
+
+        Returns:
+            False.
+        """
+        return False
+
+    def extra_fds(self) -> list[int]:
+        """No extra fds.
+
+        Returns:
+            An empty list.
+        """
+        return []
+
+    def stop(self) -> None:
+        """Nothing to stop."""
+
+
+def _child(spec: WorkerLaunchSpec) -> None:
     """The child side of the fork. Never returns: it always ends in os._exit (ADR-028).
 
     Why:
-        If this function ever returned, the child would continue running the *master's* code
+        If this function ever returned, the child would continue running the *parent's* code
         right after os.fork(): two masters. The try/finally makes os._exit unavoidable.
 
     Args:
-        child_sock: the worker's end of the channel.
-        parent_sock: the master's end (the child closes its copy).
-        worker_id: the worker id.
-        generation: the reload generation.
-        config: the configuration.
-        app: the preloaded app or None.
-        close_in_child: inherited fds to close.
+        spec: the launch spec (channel, ids, config, app, fds to close).
     """
     code = 1
     try:
         # Step 4 (child): close every inherited fd we must not keep (spec/04 §6 rule 1).
         # GOTCHA: if a worker kept the master's listening socket open, the port would stay
         # busy after the master died, and a worker could even accept() a client by accident.
-        parent_sock.close()
-        for fd in close_in_child:
+        for fd in spec.close_in_child:
             try:
                 os.close(fd)
             except OSError:
                 pass  # WHY: already closed (EBADF) is fine
         code = run_worker(
-            channel=child_sock, worker_id=worker_id, generation=generation, config=config, app=app
+            channel=spec.channel_child,
+            worker_id=spec.worker_id,
+            generation=spec.generation,
+            config=spec.config,
+            app=spec.app,
         )
     except BaseException as error:  # noqa: BLE001  # WHY: the child's outermost boundary (code-style §4)
-        print(f"kiln worker {worker_id}: fatal {type(error).__name__}: {error}", file=sys.stderr)  # noqa: T201  # WHY: logging may be broken here
+        # WHY: logging may be broken this early, so write straight to stderr.
+        sys.stderr.write(f"kiln worker {spec.worker_id}: fatal {type(error).__name__}: {error}\n")
         code = 1
     finally:
         finalize_and_exit(code)

@@ -166,10 +166,22 @@ The "Fields" column lists fields *in addition to* the common ones in §1.2.
 
 | Event | Level | Fields | Emitted when |
 |---|---|---|---|
-| `forkserver_ready` | INFO | `preload` (module list), `preload_ms` | |
+| `forkserver_ready` | INFO | `preload` (comma-separated module list), `preload_ms` | preload finished; `ready` sent to the master |
+| `forkserver_preload_failed` | CRITICAL | `error` | the app or a `forkserver_preload` module failed to import; the server sends `boot_failed` and exits 4 |
 | `forkserver_forked` | DEBUG | `worker_id`, `pid_worker` | |
-| `forkserver_child_exit` | DEBUG | `pid_worker`, `wait_status` | reaped a child |
-| `forkserver_died` | CRITICAL | `exit_code`, `signal`, `restart_in_s` | logged by the **master** |
+| `forkserver_child_exit` | DEBUG | `pid_worker`, `wait_status` | reaped a child (and reported it to the master) |
+| `forkserver_protocol_error` | CRITICAL | `detail` | a `spawn_worker` frame arrived without an fd; the server exits 1 |
+| `forkserver_master_gone` | WARNING | `children` | the control socket hit EOF: the server SIGTERMs its children, SIGKILLs survivors after 5 s, and exits |
+
+Logged by the **master** about its launcher (K2):
+
+| Event | Level | Fields | Emitted when |
+|---|---|---|---|
+| `launcher_started` | INFO | `start_method`, `pid_launcher` (the forkserver's pid, or 0), `start_ms` | the launcher is ready: at startup, and after each forkserver restart. For fork and spawn `start_ms` is ~0 |
+| `preload_ignored` | WARNING | `reason` | `app.preload = true` with `start.method = spawn` (it has no effect there) |
+| `forkserver_start_failed` | CRITICAL | `error` | the first forkserver didn't send `ready` (preload failure or timeout); the master exits 4 |
+| `forkserver_died` | CRITICAL | `how`, `exit_code`, `signal` | the master reaped the forkserver. It restarts it at once (no delay: workers already running keep serving) and turns the old server's workers into pidfd-watched orphans |
+| `forkserver_restart_failed` | CRITICAL | `error` | the replacement forkserver didn't start; the master shuts down with mode `give_up` |
 
 ### 2.8 Gateway (K5)
 

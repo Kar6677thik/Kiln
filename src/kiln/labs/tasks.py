@@ -15,11 +15,12 @@ READ FIRST
     docs/concepts/cgroups-and-oom-killer.md (labs.alloc and the OOM lab)
 
 MILESTONE
-    Introduced in K1 (echo, sleep, burn_cpu, alloc, crash, raise, hold_gil).
+    Introduced in K1 (echo, sleep, burn_cpu, alloc, crash, raise, hold_gil). K2 adds random_probe.
 """
 
 import ctypes
 import os
+import random
 import re
 import signal
 import time
@@ -173,6 +174,19 @@ def hold_gil(seconds: float, method: str = "pydll") -> str:
     raise ValueError(f"unknown method {method!r}; use pydll or regex")
 
 
+def random_probe() -> int:
+    """Return 64 random bits from this worker's `random` generator.
+
+    Why:
+        K2 checks that every start method gives each worker its own random state: forked
+        children must not repeat the parent's "random" numbers (gate G1.3, K2 spec §5.5).
+
+    Returns:
+        A random integer.
+    """
+    return random.getrandbits(64)
+
+
 def register(app: App) -> None:
     """Register every labs.* task on the given app.
 
@@ -190,3 +204,4 @@ def register(app: App) -> None:
     app.task(name="labs.crash")(crash)
     app.task(name="labs.raise")(fail)
     app.task(name="labs.hold_gil")(hold_gil)
+    app.task(name="labs.random_probe")(random_probe)

@@ -35,6 +35,7 @@ from kiln import __version__, logsetup
 from kiln.app import App, AppLoadError, load_app
 from kiln.config import Config, ConfigError, load_config
 from kiln.errors import ErrorCode
+from kiln.launch.forkserver import ForkserverError
 from kiln.master import dispatcher
 from kiln.master.connections import ACCEPT_BATCH, MAX_CLIENTS, Connection, PeerClosed
 from kiln.master.jobs import TERMINAL, Job, JobTable, NotCancellable, NotFound, QueueFull, view
@@ -183,6 +184,7 @@ class Arbiter:
             fds += self.signals.fds()
         # WHY: the epoll fd itself is inherited too; the worker has no use for it.
         fds.append(self.selector.fileno())
+        fds += [h.pidfd for h in self.workers.all() if h.pidfd is not None]
         return fds
 
     def set_manifest(self, manifest: dict[str, object], generation: int) -> None:
@@ -316,7 +318,18 @@ class Arbiter:
             path=str(events.parent) if events else None,
             memory_events="readable" if events else "unavailable",
         )
-        if cfg.app.preload:
+        method = self.supervisor.launcher.name
+        if cfg.app.preload and method == "spawn":
+            # WHY (K2 spec §5.3): a spawned worker is a fresh interpreter and imports the app
+            # itself; nothing preloaded here could reach it.
+            logsetup.event(
+                log,
+                logging.WARNING,
+                "preload_ignored",
+                reason="app.preload has no effect with start.method=spawn: "
+                "each worker imports the app itself",
+            )
+        if cfg.app.preload and method == "fork":
             started = time.monotonic()
             try:
                 self.preloaded_app = load_app(cfg.app.spec, cfg.app.pythonpath)
@@ -336,6 +349,13 @@ class Arbiter:
                 duration_ms=round((time.monotonic() - started) * 1000, 2),
                 tasks=len(self.preloaded_app.tasks()),
             )
+        try:
+            # WHY: forkserver: start the server now (it preloads the app, not the master).
+            self.supervisor.start_launcher()
+        except ForkserverError as problem:
+            logsetup.event(log, logging.CRITICAL, "forkserver_start_failed", error=str(problem))
+            return False
+        self.watch_launcher_socket()
         self.timers.schedule(time.monotonic() + TICK_S, "tick")
         self.supervisor.ensure_workers()
         return True
@@ -381,6 +401,10 @@ class Arbiter:
                 self._on_client_event(obj, mask)
             elif kind == "worker":
                 self._on_worker_event(obj, mask)
+            elif kind == "launcher":
+                self._on_launcher_readable()
+            elif kind == "orphan":
+                self.supervisor.on_orphan_exit(obj)
         for timer in self.timers.pop_expired(time.monotonic()):
             self._on_timer(timer.kind, timer.key)
         if self._dispatch_needed or self.jobs.queue:
@@ -591,7 +615,7 @@ class Arbiter:
         elif kind == "job_timeout" and isinstance(key, tuple):
             self.supervisor.on_job_timeout(key[0], key[1])
             self.dispatch_soon()
-        elif kind in ("boot_deadline", "retire_deadline") and isinstance(key, int):
+        elif kind in ("boot_deadline", "retire_deadline") and isinstance(key, WorkerHandle):
             self.supervisor.on_deadline(kind, key)
         elif kind == "respawn":
             self.supervisor.on_respawn_timer()
@@ -666,12 +690,13 @@ class Arbiter:
         self._finished = True
 
     def _cleanup(self) -> None:
-        """Flush client replies (≤ 1 s), restore signals, remove the pidfile.
+        """Stop the launcher, flush client replies (≤ 1 s), restore signals, remove the pidfile.
 
         Why:
-            Clients waiting on replies deserve them, and the pidfile and signal handlers must not
-            outlive the master.
+            Clients waiting on replies deserve them, and the forkserver, the pidfile and the
+            signal handlers must not outlive the master.
         """
+        self._stop_launcher()
         deadline = time.monotonic() + 1.0
         while time.monotonic() < deadline and any(c.wants_write for c in self.clients.values()):
             for conn in list(self.clients.values()):
@@ -1013,6 +1038,85 @@ class Arbiter:
             return
         for msg in messages:
             self._handle_worker_message(handle, msg)
+
+    # --- launcher (K2) ------------------------------------------------------------------------
+
+    def watch_launcher_socket(self) -> None:
+        """Register the launcher's socket (the forkserver control socket) with the selector."""
+        sock = self.supervisor.launcher.selectable()
+        if sock is not None:
+            self.selector.register(sock, selectors.EVENT_READ, ("launcher", None))
+
+    def forget_launcher_socket(self) -> None:
+        """Unregister the launcher's socket (the forkserver closed it or died)."""
+        for key in list(self.selector.get_map().values()):
+            if key.data == ("launcher", None):
+                self.selector.unregister(key.fileobj)
+
+    def _on_launcher_readable(self) -> None:
+        """Read forkserver messages and hand the events to the supervisor.
+
+        Why:
+            The arbiter owns the selector; the supervisor owns worker state. This method is
+            the bridge, and it drops the socket from the selector once the server closed it.
+        """
+        launcher = self.supervisor.launcher
+        events = launcher.on_readable()
+        if launcher.selectable() is None:
+            self.forget_launcher_socket()
+        self.supervisor.on_launcher_events(events)
+        self.dispatch_soon()
+
+    def watch_orphan(self, handle: WorkerHandle) -> None:
+        """Watch an orphaned worker's pidfd: it becomes readable when the process exits.
+
+        Why:
+            spec/04 §6 rule 4: a pidfd is the only pid-reuse-safe way to notice a non-child's exit.
+
+        Args:
+            handle: the orphaned worker (handle.pidfd is set).
+        """
+        if handle.pidfd is not None:
+            self.selector.register(handle.pidfd, selectors.EVENT_READ, ("orphan", handle))
+
+    def unwatch_orphan(self, handle: WorkerHandle) -> None:
+        """Stop watching and close a worker's pidfd (when it has died, by any route).
+
+        Why:
+            A pidfd is an open fd: forgetting to close it would leak one fd per dead worker.
+
+        Args:
+            handle: the worker.
+        """
+        if handle.pidfd is None:
+            return
+        try:
+            self.selector.unregister(handle.pidfd)
+        except (KeyError, ValueError):
+            pass  # WHY: it was never registered (the worker wasn't an orphan)
+        os.close(handle.pidfd)
+        handle.pidfd = None
+
+    def _stop_launcher(self) -> None:
+        """Tell the launcher to stop and, for a forkserver, reap it (≤ 2 s).
+
+        Why:
+            The forkserver is the master's child; exiting without reaping it would leave it
+            running (or a zombie) after `kiln serve` returns.
+        """
+        launcher = self.supervisor.launcher
+        launcher.stop()
+        if launcher.reaps_children:
+            return
+        deadline = time.monotonic() + 2.0
+        while time.monotonic() < deadline:
+            try:
+                pid, _ = os.waitpid(-1, os.WNOHANG)
+            except ChildProcessError:
+                return
+            if pid and launcher.owns_pid(pid):
+                return
+            time.sleep(0.02)  # WHY: shutdown only; nothing else to serve
 
     def drain_worker(self, handle: WorkerHandle) -> None:
         """Read and handle every message still waiting in a dead worker's channel.

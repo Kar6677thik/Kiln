@@ -1,0 +1,4 @@
+line 8: a call to .Process with target=target
+scopes: top -> test_lock -> target
+is 'target' nested inside another function? True
+free variables of target (read from the enclosing function): ('count',)

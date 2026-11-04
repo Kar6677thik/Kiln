@@ -205,12 +205,31 @@ class KilnServer:
         self._log_file.close()
 
 
+# WHY (K2 spec §6 step 2.3): every integration test runs once per start method, so a
+# behaviour that only works under fork shows up as a failing spawn/forkserver variant.
+START_METHODS = ["fork", "spawn", "forkserver"]
+
+
+@pytest.fixture(params=START_METHODS)
+def start_method(request: pytest.FixtureRequest) -> str:
+    """The start method this test variant runs with.
+
+    Args:
+        request: pytest's request object (holds the current parameter).
+
+    Returns:
+        "fork", "spawn" or "forkserver".
+    """
+    return str(request.param)
+
+
 @pytest.fixture
-def kiln_server(tmp_path: Path) -> Iterator[Callable[..., KilnServer]]:
+def kiln_server(tmp_path: Path, start_method: str) -> Iterator[Callable[..., KilnServer]]:
     """Factory fixture that starts servers, for example with --workers 2 and some env vars.
 
     Args:
         tmp_path: pytest's temporary folder.
+        start_method: the start.method every server uses (from the `start_method` fixture).
 
     Yields:
         A function that starts servers; every server is killed after the test.
@@ -236,7 +255,9 @@ def kiln_server(tmp_path: Path) -> Iterator[Callable[..., KilnServer]]:
         """
         folder = tmp_path / f"server{len(started)}"
         folder.mkdir()
-        server = KilnServer(folder, list(args), env or {}, app)
+        server = KilnServer(
+            folder, list(args), {"KILN_START__METHOD": start_method, **(env or {})}, app
+        )
         started.append(server)
         if wait:
             server.wait_listening()

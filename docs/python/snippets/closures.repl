@@ -1,0 +1,19 @@
+def make_counter():
+    count = 0
+    def increment():
+        nonlocal count
+        count += 1
+        return count
+    return increment
+
+counter = make_counter()
+counter(), counter(), counter()
+counter.__qualname__
+counter.__code__.co_freevars
+counter.__closure__[0].cell_contents
+callbacks = [lambda: i for i in range(3)]
+[f() for f in callbacks]
+callbacks = [lambda i=i: i for i in range(3)]
+[f() for f in callbacks]
+import pickle
+pickle.dumps(counter)

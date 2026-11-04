@@ -1,0 +1,6 @@
+default start method here: <ANY>
+  hello fork from pid-is-different=True
+  fork: child exit code 0
+  hello spawn from pid-is-different=False
+  spawn: child exit code 0
+Pool.map(square, [1, 2, 3, 4]) = [1, 4, 9, 16]

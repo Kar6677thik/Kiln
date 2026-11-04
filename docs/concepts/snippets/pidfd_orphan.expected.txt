@@ -1,0 +1,4 @@
+grandchild pid <PID> is an orphan now
+its new parent is pid <PID> (<ANY>), not us (pid <PID>)
+waitpid on it fails: ChildProcessError (No child processes)
+pidfd readable: True after about <NUM> s

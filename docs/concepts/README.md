@@ -25,14 +25,14 @@
 | 18 | [`cgroups-and-oom-killer`](cgroups-and-oom-killer.md) | K1 | ✍️ |
 | 19 | `observability` (deferred: the logging format is taught in spec/06 and python/logging-basics for now) | K1 | ⏳ |
 | 20 | `testing-multiprocess-code` (deferred: the code tour's stop on tests/support/kiln_helpers.py covers it for now) | K1 | ⏳ |
-| 21 | `start-methods` | K2 | ⏳ |
-| 22 | `pickling` | K2 | ⏳ |
-| 23 | `main-module` | K2 | ⏳ |
-| 24 | `import-system` | K2 | ⏳ |
-| 25 | `fd-passing` | K2 | ⏳ |
-| 26 | `reparenting-and-orphans` | K2 | ⏳ |
-| 27 | `ast-and-symtable` | K2 | ⏳ |
-| 28 | `static-vs-dynamic-analysis` | K2 | ⏳ |
+| 21 | [`start-methods`](start-methods.md) | K2 | ✍️ |
+| 22 | [`pickling`](pickling.md) | K2 | ✍️ |
+| 23 | [`main-module`](main-module.md) | K2 | ✍️ |
+| 24 | [`import-system`](import-system.md) | K2 | ✍️ |
+| 25 | [`fd-passing`](fd-passing.md) | K2 | ✍️ |
+| 26 | [`reparenting-and-orphans`](reparenting-and-orphans.md) | K2 | ✍️ |
+| 27 | [`ast-and-symtable`](ast-and-symtable.md) | K2 | ✍️ |
+| 28 | [`static-vs-dynamic-analysis`](static-vs-dynamic-analysis.md) | K2 | ✍️ |
 | 29 | `virtual-memory-and-pages` | K3 | ⏳ |
 | 30 | `copy-on-write` | K3 | ⏳ |
 | 31 | `smaps` | K3 | ⏳ |

@@ -43,6 +43,7 @@
 | [032](#adr-032) | K0 tooling details (implementation choices) | Accepted (implementer, pending learner review) |
 | [033](#adr-033) | K1 import-boundary additions | Accepted (implementer, pending learner review) |
 | [034](#adr-034) | K1 implementation details | Accepted (implementer, pending learner review) |
+| [035](#adr-035) | K2 implementation details (launchers) | Accepted (implementer, pending learner review) |
 
 ---
 
@@ -290,3 +291,21 @@
      - Why: the worker may have sent a result just before exiting, and the loop may see SIGCHLD before reading that socket.
      - It was found by `test_reload_under_load_drops_nothing`, failing about 1 run in 3.
   7. **`labs.raise` is implemented by a function named `fail`.** `raise` is a Python keyword, so it can't be a function name. The task name stays `labs.raise`.
+
+<a id="adr-035"></a>
+## ADR-035: K2 implementation details (launchers)
+- **Status:** Accepted (implementer, pending learner review)
+- **Decisions:**
+  1. **The forkserver gets the config once, on its command line.** `spawn_worker` carries only `worker_id` and `generation`, not a `worker_config` dict as spec/02 §4.3 first said.
+     - Why: the config is loaded once and never changes during the master's life (not even on SIGHUP), so sending it with every request would only repeat the same bytes. spec/02 is updated.
+     - Consequence: a reload under forkserver re-forks from the *same* preloaded server, so, like fork with `app.preload`, it doesn't pick up changed app code. That matches gunicorn's `preload_app` behaviour.
+  2. **A dead forkserver is restarted at once, with no backoff.** spec/06 listed a `restart_in_s` field; there is none.
+     - Why: the workers it already created keep serving (they become pidfd-watched orphans), and a restart that fails makes the master shut down (`forkserver_restart_failed`, mode `give_up`), so there's no crash loop to slow down.
+     - Workers the old server was still creating (no `spawned` reply yet) can't be found again; they are finished as `unknown_exit`.
+  3. **New master event `launcher_started`** (`start_method`, `pid_launcher`, `start_ms`), and a `pid` attribute on every launcher (0 for fork and spawn). Lab K2 (a) needs the forkserver's start cost, and tests need its pid; reading it from the master's own log is simpler and more reliable than parsing the forkserver's lines.
+  4. **Modules run with `python -m` name their logger explicitly** (`logging.getLogger("kiln.launch.forkserver_main")`). Run that way, `__name__` is `"__main__"`, so `getLogger(__name__)` would sit outside the configured `kiln` logger tree and every line would silently vanish. A test found this: no `role=forkserver` line ever reached the log.
+  5. **The launcher tests live in one file,** `tests/integration/test_launchers_e2e.py`, not in separate `test_spawn_launcher.py` and `test_forkserver_launcher.py` files. Most checks are the same for every method and are parametrised over all three with the `start_method` fixture; all K1 integration tests are parametrised the same way.
+  6. **Lab K2 (a) makes its own ext4 copy** (`~/kiln-bench/{src,examples,labs}`, with `shutil.copytree`) instead of using `scripts/bench-snapshot.sh`, because that script needs `rsync`, which isn't installed yet (it needs `sudo apt install rsync`). The servers run with `PYTHONPATH=<snapshot>/src` so `kiln` itself is read from ext4.
+  7. **The heavy lab app holds one 100 MiB `bytes` object** made with `os.urandom` (`labs/k2/heavy_app.py`). Random bytes force real pages (a zero-filled buffer might never be backed by memory), and a single object keeps the copy-on-write sharing almost perfect. How many small objects behave instead is K3's question.
+  8. **A worker announces `retiring` *before* the result of its last job** (amends ADR-034 §5). Previously the result went first: the master saw a free slot and could send one more `run` before the announcement arrived, so a worker with a limit of 15 jobs occasionally did 16. Announcing first means the master never refills that slot. Found by `test_max_jobs_with_jitter_recycles_between_10_and_15[forkserver]`; the race existed under fork too, and forkserver's timing exposed it.
+

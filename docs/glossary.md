@@ -14,14 +14,19 @@
 ## A
 - **abi3 / abi3t.** abi3 is CPython's *stable ABI*: one compiled extension works across many Python versions (GIL builds only). abi3t (PEP 803, 3.15) is the stable ABI for free-threaded builds. *See:* K8.
 - **Absolute path / relative path.** An absolute path starts at the root (`/home/...`); a relative one is relative to the current folder (`docs/README.md`). *See:* [python/pathlib.md](python/pathlib.md).
+- **Abstract syntax tree (AST) / node.** The tree `ast.parse` builds from source code: each **node** is one piece of syntax (a call, an assignment, a name). *Example:* `os.fork()` is a `Call` node whose `func` is an `Attribute` node. *See:* [concepts/ast-and-symtable.md](concepts/ast-and-symtable.md)
 - **accept.** The call that takes one waiting connection from a listening socket and returns a new socket for it. *See:* [concepts/sockets-and-socketpairs.md](concepts/sockets-and-socketpairs.md).
 - **ADR (Architecture Decision Record).** A short note that records one design decision and why it was made. *Example:* ADR-009 says jobs carry JSON, not pickle. *See:* [decisions.md](decisions.md).
 - **Amdahl's law.** If part of a job can't run in parallel, that part caps the speedup. With 10% serial work, you can never get more than 10× faster, however many cores you add. *See:* K4.
+- **Ancillary data.** A side channel of a Unix-socket message, separate from the normal bytes. SCM_RIGHTS uses it to carry open fds. *See:* [concepts/fd-passing.md](concepts/fd-passing.md)
+- **`__annotate__` scope.** An extra, hidden function scope Python 3.14+ creates to hold lazily evaluated annotations (PEP 649). Tools must find scopes by name, not by position, because it shifts the order. *See:* [python/symtable-module.md](python/symtable-module.md)
 - **App / app spec.** The user's object that holds registered tasks, and the `"module:attribute"` string that tells Kiln where to find it. *Example:* `examples.demo:app`. *See:* [spec/03 §1](spec/03-jobs-and-tasks.md#1-vocabulary-these-words-have-exact-meanings-in-kiln).
 - **Arbiter.** Another name for the **master** process (gunicorn's term). It "arbitrates", meaning it decides what every worker does.
 - **argparse.** The standard-library module that parses command-line arguments and writes `--help` text. *See:* [python/argparse.md](python/argparse.md).
 - **Assertion.** An `assert` statement: a condition that must be true, or the test fails. *See:* [python/pytest-basics.md](python/pytest-basics.md).
 - **ast / symtable.** Stdlib modules that turn Python source into a tree of syntax nodes (`ast`) and tell you which names are local, global or free in each scope (`symtable`). The K2 fork-checker is built on them.
+- **`ast.NodeVisitor`.** A base class that walks a tree and calls your `visit_Call`, `visit_FunctionDef`, … method for each node of that type. *See:* [python/ast-module.md](python/ast-module.md)
+- **`ast.parse` / `ast.dump` / `ast.walk` / `ast.unparse`.** Source to tree; tree to readable text; every node of a tree (in no particular order); tree back to source. *See:* [python/ast-module.md](python/ast-module.md)
 - **async def / await.** `async def` defines a coroutine function; `await` pauses it until something is ready, letting other coroutines run meanwhile. *See:* [python/asyncio-first-look.md](python/asyncio-first-look.md).
 - **asyncio.** Python's standard library for running many waiting tasks on one thread using an **event loop**, `async def` and `await`. *See:* K5.
 - **asyncio streams.** asyncio's reader/writer pairs for sockets (`open_connection`, `start_server`). *See:* [python/asyncio-first-look.md](python/asyncio-first-look.md).
@@ -82,6 +87,7 @@
 - **Copy (of bytes).** Duplicating data in memory; slicing `bytes` copies, slicing a memoryview doesn't. *See:* [python/bytearray-and-memoryview.md](python/bytearray-and-memoryview.md).
 - **Copy-on-read.** Instagram's name for the problem in K3: in CPython, merely *reading* an object changes its refcount (a write), so shared copy-on-write pages get copied anyway.
 - **Copy-on-write (CoW).** After `fork()`, parent and child share the same memory pages until one of them *writes* to a page. Only then does the kernel copy that page. *See:* K3.
+- **copyreg.** A stdlib module for registering a `__reduce__`-style recipe for a class you don't own. *See:* [python/pickle-and-reduce.md](python/pickle-and-reduce.md)
 - **Core dump.** A file with a crashed process's memory, written for some fatal signals (if enabled), for debugging later. *See:* [concepts/exit-status.md](concepts/exit-status.md).
 - **Coroutine / coroutine object.** A function call that can pause and resume. Calling an `async def` function returns a coroutine object, which only runs when awaited or driven by an event loop. *See:* [python/asyncio-first-look.md](python/asyncio-first-look.md).
 - **Counter / gauge / histogram.** Metric types. A counter only goes up (jobs submitted). A gauge goes up and down (queue depth). A histogram counts observations per range, or *bucket* (latencies). *See:* [spec/06 §4](spec/06-observability.md).
@@ -139,15 +145,18 @@
 
 ## F
 - **f-string.** A string literal starting with `f` whose `{...}` parts are replaced by values: `f"{n} jobs"`. *See:* [python/f-strings.md](python/f-strings.md).
+- **False positive / false negative.** A false positive is a warning about code that's actually fine; a false negative is a real problem that wasn't reported. Precision and recall measure them. *See:* [concepts/static-vs-dynamic-analysis.md](concepts/static-vs-dynamic-analysis.md)
 - **Falsifying example.** The smallest input Hypothesis found that breaks a property, reported after shrinking. *See:* [python/hypothesis-basics.md](python/hypothesis-basics.md).
 - **Fault injection.** Making things fail on purpose (crash a worker, kill a connection) to test how the system reacts. Kiln's `labs.crash` task does this.
 - **fd (file descriptor).** A small integer a process uses to refer to an open file, socket or pipe. 0, 1 and 2 are stdin, stdout and stderr. *See:* `concepts/files-and-file-descriptors.md` (K0).
+- **fd FIFO.** Kiln's forkserver keeps the fds it receives over SCM_RIGHTS in a first-in-first-out list; each `spawn_worker` frame takes the oldest one. *See:* [concepts/fd-passing.md](concepts/fd-passing.md)
 - **FFI boundary cost.** The overhead paid on *every* call between Python and native code (converting arguments and results). Many tiny calls can cancel out a native speedup. *See:* K8.
 - **Field (dataclass).** One annotated name in a dataclass, which becomes a constructor parameter and an attribute. *See:* [python/dataclasses.md](python/dataclasses.md).
 - **FIFO.** First in, first out: a queue where the oldest item leaves first.
 - **file descriptor (fd).** A small integer a process uses to refer to an open file, socket or pipe. 0, 1 and 2 are stdin, stdout and stderr. *See:* [concepts/files-and-file-descriptors.md](concepts/files-and-file-descriptors.md).
 - **File object.** Python's wrapper around a file descriptor, returned by `open()`. It has methods like `.read()`, `.write()` and `.fileno()`. *See:* [concepts/files-and-file-descriptors.md](concepts/files-and-file-descriptors.md).
 - **Finalization.** What the interpreter does at shutdown: running atexit handlers, a final GC, tearing down modules. *See:* K3.
+- **Finder / loader.** The two halves of an import: a finder locates the module (for example a `.py` file on `sys.path`), and a loader executes it to create the module object. *See:* [concepts/import-system.md](concepts/import-system.md)
 - **First-class function.** Functions are values: they can be stored in variables, passed to other functions and returned. *See:* [python/decorators.md](python/decorators.md).
 - **Fixture (pytest).** A reusable piece of test setup and teardown that pytest injects into tests by name, such as a running Kiln server that is always cleaned up.
 - **Flaky test.** A test that sometimes passes and sometimes fails with no code change, usually because of timing. Kiln's policy is in [spec/09](spec/09-testing-strategy.md).
@@ -159,10 +168,12 @@
 - **Format spec.** The part after `:` in a replacement field that controls layout, such as `{x:.2f}` or `{name:<10}`. *See:* [python/f-strings.md](python/f-strings.md).
 - **Format string (struct).** A layout description for struct, such as `"!I"`: network byte order, one unsigned 32-bit int. *See:* [python/struct.md](python/struct.md).
 - **Frame (protocol).** One complete message on the wire: a 4-byte length plus the JSON payload. *See:* [spec/02](spec/02-protocol.md).
+- **Free variable.** A name a function reads from an *enclosing* function, not from its own scope or the module. It's what makes a function a closure. *See:* [concepts/ast-and-symtable.md](concepts/ast-and-symtable.md)
 - **Free-threading (3.13t / 3.15t).** A CPython build without the GIL, so threads can run Python code truly in parallel. *See:* K4.
 - **Frozen dataclass.** A dataclass made read-only with `frozen=True`; assigning to a field raises an error. *See:* [python/dataclasses.md](python/dataclasses.md).
 - **FrozenInstanceError.** Raised when you assign to a field of a frozen dataclass. *See:* [python/slots-and-frozen-dataclasses.md](python/slots-and-frozen-dataclasses.md).
 - **Function.** A named, reusable block of code defined with `def`. *See:* [python/functions.md](python/functions.md).
+- **functools.partial / partial object.** `partial(f, 1, x=2)` builds a callable that calls `f(1, ..., x=2)`. The result keeps `.func`, `.args` and `.keywords`, and is picklable if `f` is. *See:* [python/functools-partial.md](python/functools-partial.md)
 - **functools.wraps.** A helper that copies a function's name and docstring onto its wrapper. *See:* [python/decorators.md](python/decorators.md).
 
 ## G
@@ -175,6 +186,7 @@
 - **Generator expression.** A comprehension in `(...)` that produces values one at a time, on demand, and can only be used once. *See:* [python/comprehensions.md](python/comprehensions.md).
 - **Generic type.** A container type that names its item type: `list[int]`, `dict[str, Job]`. *See:* [python/type-hints.md](python/type-hints.md).
 - **getattr.** `getattr(obj, "name")` reads an attribute whose name is a string. *See:* [python/importlib.md](python/importlib.md).
+- **`get_context` / `set_start_method`.** `get_context("spawn")` returns a multiprocessing API bound to one start method; `set_start_method` changes the default for the whole program (once). *See:* [python/multiprocessing-basics.md](python/multiprocessing-basics.md)
 - **GIL (Global Interpreter Lock).** A lock in standard CPython that lets only one thread run Python bytecode at a time. *See:* K4.
 - **git.** The version-control tool that records snapshots (commits) of a project's files over time. *See:* [concepts/git-basics.md](concepts/git-basics.md).
 - **@given.** Hypothesis's decorator that runs a test many times with generated inputs. *See:* [python/hypothesis-basics.md](python/hypothesis-basics.md).
@@ -196,11 +208,13 @@
 - **Immortal objects (PEP 683).** Objects whose reference count never changes (for example `None`), so touching them never writes to their memory.
 - **import.** The statement that loads a module and gives you a name to use it: `import json`. *See:* [python/modules-and-imports.md](python/modules-and-imports.md).
 - **Import boundary.** A rule about which Kiln packages may import which (for example, `master` never imports `worker`), enforced by a test. *See:* [spec/01 §5](spec/01-architecture.md).
+- **Import-time side effect.** Work a module does merely by being imported: opening files, starting threads, connecting to a database. Under fork it happens once in the parent; under spawn it happens again in every child. *See:* [concepts/import-system.md](concepts/import-system.md)
 - **importlib.import_module.** Imports a module whose name is in a string; `load_app` uses it for "examples.demo:app". *See:* [python/importlib.md](python/importlib.md).
 - **In-flight.** Sent to a worker but not finished yet.
 - **Incremental GC.** A collector that does its work in small slices to keep pauses short. Python 3.14.0–3.14.4 shipped one, and it was reverted because of peak memory blowups. *See:* K7.
 - **Index.** The position number of an item in a sequence, starting at 0: `argv[0]` is the first item. *See:* [python/slicing.md](python/slicing.md).
 - **IndexError.** The error raised when you ask for an index that doesn't exist, such as `[1, 2][5]`. *See:* [python/slicing.md](python/slicing.md).
+- **Inheritable fd.** A file descriptor that stays open in a program started with exec. Python makes new fds *non*-inheritable by default (PEP 446); `os.set_inheritable(fd, True)` opts one in. *See:* [concepts/fd-passing.md](concepts/fd-passing.md)
 - **Inheritance / subclass.** A subclass starts from a parent class's attributes and methods and can add or change them: `class Status(StrEnum)`. *See:* [python/classes-and-objects.md](python/classes-and-objects.md).
 - **Inherited file descriptor.** After fork(), the child's fds point at the same open files and sockets as the parent's, which is why a worker must close the master's listener. *See:* [concepts/fork.md](concepts/fork.md).
 - **__init__.** The method Python runs to set up a new instance right after creating it. *See:* [python/classes-and-objects.md](python/classes-and-objects.md).
@@ -233,6 +247,7 @@
 
 ## L
 - **Lambda / anonymous function.** `lambda x: x * 2`: a one-expression function with no name of its own. *See:* [python/lambda.md](python/lambda.md).
+- **Late binding.** A closure reads an outer variable's value when it's *called*, not when it's created. The classic bug: lambdas made in a loop all see the last value. *See:* [python/closures.md](python/closures.md)
 - **Latency, p50 / p99.** How long one request takes. p99 is the time that 99% of requests beat (the slow tail).
 - **Lazy deletion.** Marking an item as cancelled and skipping it when it comes up, instead of removing it right away (Kiln's TimerHeap does this). *See:* [python/heapq.md](python/heapq.md).
 - **Lazy evaluation.** Computing a value only when it is actually needed. *See:* [python/comprehensions.md](python/comprehensions.md).
@@ -255,6 +270,7 @@
 
 ## M
 - **Magic string.** A bare string used as a code ("pass"); a typo in one fails silently. Enums avoid this. *See:* [python/enum.md](python/enum.md).
+- **Main module / `__main__` guard / main guard.** The main module is the file run as the program; its `__name__` is `"__main__"`. The guard `if __name__ == "__main__":` stops code from running when the file is imported, including when spawn re-imports it in a child. *See:* [concepts/main-module.md](concepts/main-module.md), [python/if-name-main.md](python/if-name-main.md)
 - **Manifest.** The list of task names and their options that a worker reports to the master in `ready`.
 - **Marker (pytest).** A label on a test (`@pytest.mark.slow`) used to select, skip or configure tests. *See:* [python/pytest-basics.md](python/pytest-basics.md).
 - **Master.** Kiln's boss process. It owns the queue and supervises workers.
@@ -266,18 +282,22 @@
 - **Method.** A function defined inside a class, called on an instance: `path.read_text()`. *See:* [python/classes-and-objects.md](python/classes-and-objects.md).
 - **Min-heap / heap.** A list kept in a special order so that the smallest item is always at index 0. `heapq` maintains it; Kiln uses one for deadlines. *See:* [python/heapq.md](python/heapq.md).
 - **Module.** A `.py` file whose code other code can import. *See:* [python/running-python-and-the-repl.md](python/running-python-and-the-repl.md).
+- **Module cache (`sys.modules`).** The dict of modules a process has already imported. A second `import x` finds it there, so a module's top-level code runs only once per process. *See:* [concepts/import-system.md](concepts/import-system.md)
 - **ModuleNotFoundError.** The error raised when an imported name can't be found on `sys.path`. *See:* [python/modules-and-imports.md](python/modules-and-imports.md).
 - **Monotonic clock.** A clock that only moves forward (`time.monotonic()`), used for measuring durations and deadlines.
 - **Mount.** Attaching a filesystem at a folder. In WSL, your Windows C: drive is mounted at `/mnt/c`. *See:* [concepts/terminal-and-wsl.md](concepts/terminal-and-wsl.md).
-- **__mp_main__.** The module name `multiprocessing` gives your main script when it re-imports it in a spawned child. That's why code under `if __name__ == "__main__":` doesn't run again there. *See:* K2.
+- **__mp_main__.** The module name `multiprocessing` gives your main script when it re-imports it in a spawned child. That's why code under `if __name__ == "__main__":` doesn't run again there. *See:* [concepts/main-module.md](concepts/main-module.md).
 - **Multi-phase init.** The modern way a C extension module initializes itself, using a list of *slots* (such as `Py_mod_gil`) instead of one init function. *See:* K4.
+- **multiprocessing.** The stdlib package for running Python code in other processes. *See:* [python/multiprocessing-basics.md](python/multiprocessing-basics.md)
 - **Mutable / immutable.** A mutable object can be changed in place (list, dict); an immutable one cannot (int, str, tuple). *See:* [python/variables-and-types.md](python/variables-and-types.md).
 - **Mutable default.** A list or dict used as a default value: it is created once and shared by every call, a classic bug. *See:* [python/functions.md](python/functions.md).
 
 ## N
 - **__name__.** A variable every module has: `"__main__"` when the file is run as the program, its module name when imported. *See:* [python/running-python-and-the-repl.md](python/running-python-and-the-repl.md).
+- **Nested function / closure.** A `def` inside another function. If it uses the outer function's variables it's a closure: a function plus the variables it keeps alive. *See:* [python/closures.md](python/closures.md)
 - **Non-blocking I/O.** Socket operations that return immediately, with whatever data is available or "nothing yet", instead of waiting.
 - **None.** Python's "no value" value. *See:* [python/variables-and-types.md](python/variables-and-types.md).
+- **`nonlocal`.** Lets a nested function *assign* to a variable of the enclosing function, instead of creating a new local one. *See:* [python/closures.md](python/closures.md)
 
 ## O
 - **Object.** A value in memory that knows its own type: `42`, `"hi"`, a list, a function. *See:* [python/variables-and-types.md](python/variables-and-types.md).
@@ -308,11 +328,17 @@
 - **perf_counter.** The highest-resolution monotonic clock (`time.perf_counter()`), for timing short operations. *See:* [python/time-monotonic.md](python/time-monotonic.md).
 - **Permanent generation.** Where `gc.freeze()` puts objects: the GC never scans them again. *See:* K3.
 - **pickle.** Python's built-in way to turn objects into bytes and back. Unsafe on untrusted data. Required by `multiprocessing` spawn/forkserver.
+- **Pickle by reference.** pickle stores functions and classes as "module + qualified name", not as code, so the receiving process must be able to import them under that name. *See:* [concepts/pickling.md](concepts/pickling.md)
+- **Pickle protocol.** The version of pickle's byte format. Protocol 5 is the default and the highest on Kiln's Python versions. *See:* [python/pickle-and-reduce.md](python/pickle-and-reduce.md)
+- **`pickle.dumps` / `pickle.loads`.** Object to bytes, and bytes back to an object. *See:* [python/pickle-and-reduce.md](python/pickle-and-reduce.md)
+- **Pickling / unpickling / picklable.** Turning an object into bytes with `pickle`, and back again. An object is picklable if it survives that round trip; lambdas and nested functions don't. *See:* [concepts/pickling.md](concepts/pickling.md)
 - **pid.** Process id, the number the OS uses to identify a process.
+- **Pid reuse.** After a process is reaped, the kernel may give its pid to a new, unrelated process. That's why signalling a remembered pid can hit the wrong process, and why Kiln uses pidfds. *See:* [concepts/reparenting-and-orphans.md](concepts/reparenting-and-orphans.md)
 - **Pidfd.** A file descriptor that refers to a process and becomes readable when that process exits. Unlike a pid, it can't be confused with a later process that reuses the same number. *See:* [spec/04 §6](spec/04-supervisor.md).
 - **Pipe.** A one-way channel of bytes between processes: what one writes, the other reads. `a | b` in the shell connects a's stdout to b's stdin. *See:* [concepts/files-and-file-descriptors.md](concepts/files-and-file-descriptors.md).
 - **PIPE_BUF.** The size (4096 bytes on Linux) below which a single write to a pipe is guaranteed not to interleave with other writers. It matters for multi-process logging.
 - **Pipelining.** Sending several requests without waiting for each reply, matched up later by an id (`req_id`).
+- **`Pool`.** A `multiprocessing` set of worker processes that run the function calls you hand it. *See:* [python/multiprocessing-basics.md](python/multiprocessing-basics.md)
 - **Port.** A number (0–65535) that picks which program on a machine a network connection is for. Kiln uses 7340 and 7341. *See:* [concepts/what-is-a-server.md](concepts/what-is-a-server.md).
 - **Port 0.** Asking the kernel to pick any free port when binding a socket. Tests use it so they never collide.
 - **Positional argument.** A command-line argument recognised by its position, with no `--name` in front. *See:* [python/argparse.md](python/argparse.md).
@@ -339,6 +365,7 @@
 - **python-build-standalone.** The relocatable, prebuilt CPython builds that `uv python install` downloads.
 
 ## Q
+- **Qualified name (qualname) / `__qualname__`.** The dotted path to a definition inside its module, for example `outer.<locals>.inner` for a nested function. The `<locals>` part is why such a function can't be pickled. *See:* [python/closures.md](python/closures.md)
 - **Queue.** Jobs waiting for a worker, in FIFO order.
 - **Quoting.** Wrapping text in `"..."` or `'...'` in the shell so spaces and special characters aren't split or expanded. Essential for paths like `Karthik Reddy`. *See:* [concepts/terminal-and-wsl.md](concepts/terminal-and-wsl.md).
 
@@ -351,12 +378,14 @@
 - **Reap / reaping.** A parent calling `waitpid()` to collect a dead child's exit status, which removes the **zombie**.
 - **Recycling (worker).** Retiring a worker on purpose after N jobs or X MB, to contain slow leaks.
 - **Redirection.** Pointing a program's standard streams at a file or another program with `>`, `2>` or `2>&1` in the shell. *See:* [concepts/files-and-file-descriptors.md](concepts/files-and-file-descriptors.md).
+- **`__reduce__`.** A method that tells pickle how to rebuild an object: it returns a `(callable, args)` recipe. *See:* [python/pickle-and-reduce.md](python/pickle-and-reduce.md)
 - **Reference count (refcount).** How many references point at an object. CPython frees an object when this reaches 0. Changing it is a *write* to the object's memory, which breaks copy-on-write.
 - **Reference cycle.** Objects that refer to each other in a loop, so their refcounts never reach 0 on their own.
 - **register / unregister.** Start or stop watching a socket with a selector. *See:* [python/selectors-module.md](python/selectors-module.md).
 - **Release build.** Native code compiled with optimizations on. Benchmarks of Rust code must use release builds. *See:* K8.
 - **Reload.** Replacing all workers with new ones (on SIGHUP) without dropping jobs.
 - **Remote attach (PEP 768).** Running a debugger or code inside an already-running Python process at a safe point (`python -m pdb -p PID`, `sys.remote_exec`). *See:* K6.
+- **Reparenting / subreaper.** When a process's parent dies, the kernel gives the orphan a new parent: the nearest ancestor marked as a subreaper, or pid 1. On WSL that's the `Relay(...)` process. *See:* [concepts/reparenting-and-orphans.md](concepts/reparenting-and-orphans.md)
 - **REPL.** Read–Eval–Print Loop: the interactive `>>>` prompt where Python runs each line as you type it. *See:* [python/running-python-and-the-repl.md](python/running-python-and-the-repl.md).
 - **Replacement field.** One `{...}` inside an f-string. *See:* [python/f-strings.md](python/f-strings.md).
 - **Repository.** A project folder plus its full history, stored in the hidden `.git/` folder. *See:* [concepts/git-basics.md](concepts/git-basics.md).
@@ -371,11 +400,13 @@
 - **Return value.** What a function hands back with `return`; `None` if there is no `return`. *See:* [python/functions.md](python/functions.md).
 - **RuleBasedStateMachine.** Hypothesis's tool for testing stateful objects: it generates random sequences of operations and checks the invariants after each one. Used for Kiln's JobTable.
 - **Run / variant / experiment.** An experiment compares variants (for example gc_mode=default vs freeze). Each variant is measured over several runs, and every run produces one ExperimentRecord.
+- **runpy / `run_path` / `run_module`.** The stdlib module behind `python -m`: `run_module` runs a module by import name and `run_path` runs a file, each as a fresh module with a chosen `__name__`. forkcheck's `--confirm` uses it. *See:* [python/runpy.md](python/runpy.md)
 
 ## S
 - **SafeHTML.** Kiln's marker type for HTML that is already escaped and must not be escaped again by the t-string processor. *See:* K9.
 - **Sans-IO.** Designing a protocol parser that only turns bytes into events and never touches sockets itself, which makes it easy to test. *See:* K5.
-- **SCM_RIGHTS.** The Unix-socket feature that sends an open file descriptor to another process (`socket.send_fds`). *See:* K2.
+- **SCM_RIGHTS.** The Unix-socket feature that sends an open file descriptor to another process (`socket.send_fds`). *See:* [concepts/fd-passing.md](concepts/fd-passing.md).
+- **Scope.** A region where a name lives: the module, a function, or a class body. A name assigned inside a function is local to that function's scope. *See:* [concepts/ast-and-symtable.md](concepts/ast-and-symtable.md)
 - **Script.** A `.py` file you run as a program: `python file.py`. *See:* [python/running-python-and-the-repl.md](python/running-python-and-the-repl.md).
 - **Selector / `selectors`.** The stdlib module for waiting on many sockets at once. *See:* K1.
 - **SelectorKey.** What a selector returns for each ready socket: the file object, its fd, the events, and your `data`. *See:* [python/selectors-module.md](python/selectors-module.md).
@@ -402,6 +433,7 @@
 - **Socket.** An endpoint for sending and receiving bytes, over a network (TCP) or locally (Unix domain sockets).
 - **Socket object.** Python's handle on an operating-system socket, an fd that carries bytes. *See:* [python/socket-module.md](python/socket-module.md).
 - **socketpair.** Two already-connected local sockets. Kiln creates one per worker.
+- **Soundness / completeness.** A sound checker never misses a real problem (no false negatives); a complete one never raises a false alarm (no false positives). Useful checkers are usually neither. *See:* [concepts/static-vs-dynamic-analysis.md](concepts/static-vs-dynamic-analysis.md)
 - **Spawn.** A start method that launches a completely fresh Python interpreter.
 - **src layout.** Keeping the package under `src/` so that tests run against the *installed* package, not whatever happens to be in the current folder.
 - **Staging area (index).** Git's list of changes that will go into the next commit (`git add` puts them there). *See:* [concepts/git-basics.md](concepts/git-basics.md).
@@ -410,6 +442,7 @@
 - **State machine.** A model with a fixed set of states and allowed transitions between them. *See:* [spec/03 §4](spec/03-jobs-and-tasks.md#4-the-job-state-machine).
 - **Stateful testing.** Testing by generating random *sequences of operations* and checking invariants after each step (RuleBasedStateMachine). *See:* [python/hypothesis-basics.md](python/hypothesis-basics.md).
 - **Static analysis.** Examining code without running it, by reading its syntax tree. *See:* K2.
+- **Static analysis / dynamic analysis.** Static analysis inspects code without running it (Kiln's `forkcheck`); dynamic analysis runs it and watches (forkcheck's `--confirm`). *See:* [concepts/static-vs-dynamic-analysis.md](concepts/static-vs-dynamic-analysis.md)
 - **stdin / stdout / stderr.** A process's three standard streams: fd 0 (input), fd 1 (normal output) and fd 2 (errors and logs). *See:* [concepts/files-and-file-descriptors.md](concepts/files-and-file-descriptors.md).
 - **Stdlib (standard library).** The modules that ship with Python itself.
 - **str.** Python's text type: a sequence of characters. *See:* [python/variables-and-types.md](python/variables-and-types.md).
@@ -422,6 +455,8 @@
 - **Subinterpreter.** A separate Python interpreter inside the same process, with its own modules and globals. *See:* K4.
 - **super().** Calls the parent class's version of a method from inside a subclass. *See:* [python/classes-and-objects.md](python/classes-and-objects.md).
 - **Swap.** Disk space the kernel uses as overflow memory. With swap, a memory-hungry process slows down instead of being killed, which is why the OOM lab sets `MemorySwapMax=0`. *See:* [concepts/cgroups-and-oom-killer.md](concepts/cgroups-and-oom-killer.md).
+- **Symbol table / SymbolTable / Symbol.** The compiler's record of every name in every scope and whether it is local, global or free. Python's `symtable` module exposes it: one `SymbolTable` per scope, one `Symbol` per name. *See:* [python/symtable-module.md](python/symtable-module.md)
+- **`symtable.symtable`.** Builds the symbol table for a piece of source code without running it. *See:* [python/symtable-module.md](python/symtable-module.md)
 - **sys.modules.** Python's cache of modules already imported; a second import reuses the entry. *See:* [python/modules-and-imports.md](python/modules-and-imports.md).
 - **sys.path.** The list of folders Python searches when you import something. *See:* [python/modules-and-imports.md](python/modules-and-imports.md).
 - **Syscall (system call).** A request from a program to the operating system kernel, such as `fork`, `read`, `waitpid` or `kill`.

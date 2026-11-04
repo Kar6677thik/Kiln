@@ -15,6 +15,6 @@ MILESTONE
     Introduced in K1.
 """
 
-from kiln_helpers import kiln_server
+from kiln_helpers import kiln_server, start_method
 
-__all__ = ["kiln_server"]
+__all__ = ["kiln_server", "start_method"]

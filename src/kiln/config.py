@@ -78,10 +78,8 @@ RULES: dict[str, Rule] = {
     "app.spec": Rule("str", ""),
     "app.preload": Rule("bool", True),
     "app.pythonpath": Rule("list", []),
-    "start.method": Rule(
-        "str", "fork", choices=("fork", "spawn", "forkserver")
-    ),  # NOT YET USED (K2)
-    "start.forkserver_preload": Rule("list", ["kiln"]),  # NOT YET USED (K2)
+    "start.method": Rule("str", "fork", choices=("fork", "spawn", "forkserver")),
+    "start.forkserver_preload": Rule("list", ["kiln"]),
     "worker.executor": Rule("str", "sync", choices=("sync", "threads", "interpreters", "asyncio")),
     "worker.executor_concurrency": Rule("int", 8, minimum=1),  # NOT YET USED (K4)
     "worker.heartbeat_interval_s": Rule("float", 1.0, strictly_positive=True),

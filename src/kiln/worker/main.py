@@ -71,6 +71,7 @@ class WorkerState:
         self.jobs_done = 0
         self.retiring = False
         self.retire_reason = ""
+        self.announced = False  # True once `retiring` has been sent to the master
 
     def on_sigterm(self, signum: int, frame: FrameType | None) -> None:
         """SIGTERM handler: finish the current job, then exit (spec/04 §3.1).
@@ -303,12 +304,30 @@ def _receive_loop(
     # answers with `shutdown`. Messages on one channel arrive in order, so any `run` the master
     # sent before it read our announcement arrives BEFORE the shutdown and still gets served.
     # Exiting right after the announcement would silently lose such a job.
-    announced = False
     shutdown_received = False
+
+    def finished(result: Result) -> None:
+        """A job finished: count it, decide about recycling, THEN send its result.
+
+        Why:
+            If the result went first, the master would see a free slot and could send the
+            next `run` before our `retiring` arrived, so a worker with max_jobs=15 could end
+            up doing 16 (found by test_max_jobs_with_jitter_recycles_between_10_and_15 under
+            forkserver). Announcing before the result closes that window: the master reads
+            `retiring` first and never refills the slot.
+
+        Args:
+            result: the job's result.
+        """
+        state.jobs_done += 1
+        _check_recycling(config, state, max_jobs_limit)
+        if not shutdown_received:
+            _announce(chan, state)
+        _send_result(chan, result)
+
     while True:
-        if state.retiring and not announced and not shutdown_received:
-            chan.send(message(MsgType.RETIRING, Retiring(reason=state.retire_reason)))
-            announced = True
+        if not shutdown_received:
+            _announce(chan, state)  # WHY: SIGTERM can set `retiring` between jobs
         if shutdown_received and executor.inflight() == 0:
             return EXIT_OK
         raw = chan.receive(timeout_s=POLL_S)
@@ -323,9 +342,23 @@ def _receive_loop(
             shutdown_received = True
             continue
         if isinstance(parsed, Run):
-            executor.submit(parsed, lambda result: _send_result(chan, result))
-            state.jobs_done += 1
-            _check_recycling(config, state, max_jobs_limit)
+            executor.submit(parsed, finished)
+
+
+def _announce(chan: Channel, state: WorkerState) -> None:
+    """Send `retiring` once, if this worker has decided to leave.
+
+    Why:
+        The master must hear about a retirement exactly once, and as early as possible, so
+        it stops sending this worker work (the retirement handshake, ADR-034).
+
+    Args:
+        chan: the channel.
+        state: the worker's state.
+    """
+    if state.retiring and not state.announced:
+        chan.send(message(MsgType.RETIRING, Retiring(reason=state.retire_reason)))
+        state.announced = True
 
 
 def _send_result(chan: Channel, result: Result) -> None:

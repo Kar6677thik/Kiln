@@ -1,0 +1,92 @@
+{
+  "config": {},
+  "experiment": "startup",
+  "git": {
+    "commit": "384a69a",
+    "dirty": true
+  },
+  "host": {
+    "cpu_model": "Intel(R) Core(TM) Ultra 5 225H",
+    "cpus": 14,
+    "kernel": "6.6.87.2-microsoft-standard-WSL2",
+    "mem_total_bytes": 7751778304,
+    "notes": "source=ext4-snapshot",
+    "pinned_cpus": null,
+    "wsl": true
+  },
+  "interpreter": {
+    "build": "gil",
+    "executable": "/home/Megatron/.cache/kiln/venvs/py3.15/bin/python",
+    "gil_enabled_at_end": true,
+    "implementation": "cpython",
+    "jit_enabled": false,
+    "version": "3.15.1"
+  },
+  "metrics": {
+    "forkserver_pss_bytes": {
+      "unit": "bytes",
+      "value": 0
+    },
+    "launch_to_ready_ms": {
+      "samples": [
+        4.59,
+        6.87,
+        5.29,
+        5.1
+      ],
+      "unit": "ms"
+    },
+    "launcher_start_ms": {
+      "unit": "ms",
+      "value": 0.0
+    },
+    "master_pss_bytes": {
+      "unit": "bytes",
+      "value": 7712768
+    },
+    "pss_per_worker_bytes": {
+      "samples": [
+        6737920,
+        6765568,
+        6723584,
+        6702080
+      ],
+      "unit": "bytes"
+    },
+    "rss_per_worker_bytes": {
+      "samples": [
+        23924736,
+        23920640,
+        23924736,
+        23924736
+      ],
+      "unit": "bytes"
+    },
+    "total_pss_bytes": {
+      "unit": "bytes",
+      "value": 34641920
+    },
+    "uss_per_worker_bytes": {
+      "samples": [
+        3371008,
+        3407872,
+        3346432,
+        3305472
+      ],
+      "unit": "bytes"
+    }
+  },
+  "milestone": "K2",
+  "notes": "",
+  "params": {
+    "app": "examples.demo:app",
+    "fs": "ext4",
+    "method": "fork",
+    "workers": 4
+  },
+  "repeat_index": 6,
+  "run_id": "20261104T092903Z-py3.15-c8fd",
+  "schema_version": 1,
+  "started_at": "2026-11-04T09:29:03.344Z",
+  "variant": "fork-light-ext4"
+}

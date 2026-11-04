@@ -1,0 +1,15 @@
+from functools import partial
+import operator
+double = partial(operator.mul, 2)
+double(21)
+double.func, double.args, double.keywords
+int_from_hex = partial(int, base=16)
+int_from_hex("ff")
+import pickle
+len(pickle.dumps(double))
+def outer():
+    def inner(x):
+        return x + 1
+    return partial(inner, 41)
+
+pickle.dumps(outer())

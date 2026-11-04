@@ -1,0 +1,5 @@
+pipe fds <NUM>, <NUM>; inheritable by default? False
+spawning a fresh python with the fd marked inheritable=False:
+  child: fd <NUM> fails: Bad file descriptor
+spawning a fresh python with the fd marked inheritable=True:
+  child: fd <NUM> works

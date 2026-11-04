@@ -1,0 +1,3 @@
+parent: opened the file as fd <NUM>
+child : got message b'here is a file' and fd <NUM>
+child : reading it gives b'hello from a file the child never opened\n'

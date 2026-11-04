@@ -163,3 +163,17 @@
 - **Real-world lesson:** container runtimes and systemd services make the same choice. "The OOM killer killed one process" can turn into "the platform stopped everything", which is another way an operator ends up seeing only "worker lost".
 - **Affects:** K1 (fixed in `labs/k1/k1_lab.py` and spec/07 §6.1).
 - **Status:** ✅ corrected
+
+## E-19: From 3.14, `symtable` scope lists also contain `__annotate__` tables
+- **Spec claim:** K2 gate G2.9 says the `symtable` APIs Kiln uses (`get_children`, `Function.get_frees`, `Symbol.is_declared_global`) "behave the same on 3.13–3.15".
+- **Correction:** the calls exist and mean the same thing, but on 3.14+ `SymbolTable.get_children()` also returns an extra table named `__annotate__` for any scope with annotations: PEP 649 (lazy annotations) compiles annotations into a hidden function. On 3.15 it comes *first*. Code that picks a scope by position (`get_children()[0]`) gets the wrong table, or crashes with `IndexError` on a scope that has no other children. Kiln's forkcheck finds scopes by name and keeps only `symtable.Function` tables; `tests/unit/forkcheck/test_symbols.py` pins it on the whole matrix.
+- **Evidence:** the docs pass's first `symtable-module` transcript crashed with `IndexError` on 3.15.1; the note's final transcript shows the `__annotate__` scope ([python/symtable-module.md](../python/symtable-module.md)).
+- **Affects:** K2.
+- **Status:** ✅ corrected
+
+## E-20: Three corpus sources could not be inspected (K2 gates G2.7, G2.8, pexpect)
+- **Spec claim:** K2 §5.10 expects each real case to be distilled from its upstream source.
+- **Correction:** on 2026-11-04, the FSL GitLab server refused connections (G2.8, as in E-07), the oslo.concurrency Debian/Gentoo patch *diffs* were unreachable (only their descriptions were; G2.7 partial), and both pexpect packaging patches were blocked (HTTP 403 and a bot-protection page). Those three cases are **reconstructed** from the recorded symptoms and say "source not inspected" in their PROVENANCE.md. krb5 (G2.6) and git-repo were reachable.
+- **Evidence:** `corpus/real/*/PROVENANCE.md`.
+- **Affects:** K2 (corpus fidelity; the lab report's limitations section).
+- **Status:** ℹ️ clarification

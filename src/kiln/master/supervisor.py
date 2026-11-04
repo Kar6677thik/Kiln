@@ -24,13 +24,16 @@ MILESTONE
 import logging
 import os
 import signal
+import socket
 import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING
 
 from kiln import logsetup
-from kiln.launch.fork import fork_worker
+from kiln.launch import make_launcher
+from kiln.launch.base import ChildExit, Launched, LauncherEvent, Spawned, WorkerLaunchSpec
+from kiln.launch.forkserver import ForkserverError
 from kiln.master.connections import Connection
 from kiln.master.workers import WorkerHandle, WorkerState
 from kiln.protocol.messages import MsgType, Shutdown, message
@@ -240,6 +243,7 @@ class Supervisor:
             arb: the arbiter (config, tables, timers, send/register helpers).
         """
         self.arb = arb
+        self.launcher = make_launcher(arb.config)
         self.target = arb.config.master.workers
         self.generation = 0
         self.reloading = False
@@ -303,42 +307,191 @@ class Supervisor:
         self.ensure_workers()
 
     def launch(self) -> WorkerHandle:
-        """Fork one new worker of the current generation.
+        """Start one new worker of the current generation with the configured launcher.
 
         Why:
-            One place creates workers, so every launch gets a boot deadline, a log line and a
-            registered channel.
+            One place creates workers, so every launch gets a channel, a boot deadline, a log
+            line and a registered socket, whatever the start method
+            (docs/concepts/start-methods.md).
 
         Returns:
-            Its handle (state BOOTING).
+            Its handle (state BOOTING; pid 0 until a forkserver reports it).
         """
         worker_id = self.arb.workers.lowest_free_id()
         started = time.monotonic()
-        pid, sock = fork_worker(
-            worker_id=worker_id,
-            generation=self.generation,
-            config=self.arb.config,
-            app=self.arb.preloaded_app,
-            close_in_child=self.arb.child_close_fds(),
+        # The worker's private channel: the master keeps parent_sock, the worker gets child_sock.
+        parent_sock, child_sock = socket.socketpair(socket.AF_UNIX, socket.SOCK_STREAM)
+        close = [*self.arb.child_close_fds(), parent_sock.fileno(), *self.launcher.extra_fds()]
+        app = self.arb.preloaded_app if self.launcher.name == "fork" else None
+        spec = WorkerLaunchSpec(
+            worker_id, self.generation, self.arb.config, child_sock, tuple(close), app
         )
-        conn = Connection(sock, "worker", self.arb.config.protocol.max_frame_bytes)
+        try:
+            result = self.launcher.launch(spec)
+        finally:
+            # WHY: the worker (or the forkserver) now has its own copy of this fd; the master's
+            # copy must be closed, or the worker's death would never look like EOF to us.
+            child_sock.close()
+        pid = result.pid if isinstance(result, Launched) else 0
+        conn = Connection(parent_sock, "worker", self.arb.config.protocol.max_frame_bytes)
         handle = WorkerHandle(
             worker_id, self.generation, pid, conn, started, last_heartbeat_mono=started
         )
         boot_deadline = started + self.arb.config.master.boot_timeout_s
-        handle.deadline_timer = self.arb.timers.schedule(boot_deadline, "boot_deadline", pid)
+        handle.deadline_timer = self.arb.timers.schedule(boot_deadline, "boot_deadline", handle)
         self.arb.register_worker(handle)
+        if pid:
+            self._log_spawned(handle, started)
+        return handle
+
+    def _log_spawned(self, handle: WorkerHandle, started: float) -> None:
+        """Log `worker_spawned` once the worker's pid is known.
+
+        Why:
+            With fork and spawn the pid is known at launch; with forkserver only when the
+            `spawned` reply arrives. Both paths log through here so the event looks the same.
+
+        Args:
+            handle: the worker.
+            started: when the launch began (monotonic).
+        """
         logsetup.event(
             log,
             logging.INFO,
             "worker_spawned",
-            worker_id=worker_id,
-            gen=self.generation,
-            pid_worker=pid,
-            start_method="fork",
+            worker_id=handle.worker_id,
+            gen=handle.generation,
+            pid_worker=handle.pid,
+            start_method=self.launcher.name,
             launch_ms=round((time.monotonic() - started) * 1000, 2),
         )
-        return handle
+
+    def on_launcher_events(self, events: list[LauncherEvent]) -> None:
+        """Handle forkserver reports: a pending worker got its pid, or a child exited.
+
+        Why:
+            Forkserver workers are the server's children: their pids and deaths reach the master
+            only as messages (spec/02 §4.3). A ChildExit goes through the very same on_exit()
+            as a worker the master reaped itself.
+
+        Args:
+            events: from launcher.on_readable().
+        """
+        for event in events:
+            if isinstance(event, Spawned):
+                handle = next(
+                    (
+                        h
+                        for h in self.arb.workers.all()
+                        if h.worker_id == event.worker_id and h.pid == 0
+                    ),
+                    None,
+                )
+                if handle is None:
+                    continue
+                self.arb.workers.set_pid(handle, event.pid)
+                # WHY (spec/04 §6 rule 4): open the pidfd NOW, while the pid surely is ours; it
+                # lets us notice this worker's exit later even if the forkserver dies.
+                try:
+                    handle.pidfd = os.pidfd_open(event.pid)
+                except OSError:
+                    handle.pidfd = None
+                self._log_spawned(handle, handle.launched_mono)
+            elif isinstance(event, ChildExit):
+                self.on_exit(event.pid, event.wait_status)
+
+    def on_server_died(self, wait_status: int) -> None:
+        """The forkserver process exited: orphan its workers, restart it (spec/04 §6 rule 4).
+
+        Why:
+            Its running workers keep working (their channels still reach the master), but they
+            are now orphans: re-parented to init, so nobody will report their exit. We watch
+            each one's pidfd instead. Workers it hadn't created yet are given up as lost.
+
+        Args:
+            wait_status: the server's wait status.
+        """
+        death = classify_exit(wait_status, WorkerState.READY, None)
+        logsetup.event(
+            log,
+            logging.CRITICAL,
+            "forkserver_died",
+            how=death.how,
+            signal=death.signal_name,
+            exit_code=death.exit_code,
+        )
+        self.arb.forget_launcher_socket()
+        for handle in self.arb.workers.all():
+            if handle.pid == 0:
+                self._finish_death(
+                    handle,
+                    Death(
+                        "unknown_exit",
+                        None,
+                        None,
+                        False,
+                        False,
+                        logging.ERROR,
+                        "forkserver died before reporting this worker",
+                    ),
+                    False,
+                )
+            elif handle.pidfd is not None and not handle.orphan:
+                handle.orphan = True
+                self.arb.watch_orphan(handle)
+        if self.arb.shutting_down:
+            return
+        try:
+            self.start_launcher()
+        except ForkserverError as error:
+            logsetup.event(log, logging.CRITICAL, "forkserver_restart_failed", error=str(error))
+            self.arb.begin_shutdown("give_up")
+            return
+        self.arb.watch_launcher_socket()
+        self.ensure_workers()
+
+    def start_launcher(self) -> None:
+        """Start the launcher and log how long that took (`launcher_started`).
+
+        Why:
+            For forkserver this is a real cost (a fresh interpreter plus its preload) paid at
+            startup and after every forkserver death; lab K2 (a) measures it from this event.
+
+        Raises:
+            ForkserverError: the forkserver didn't start.
+        """
+        started = time.monotonic()
+        self.launcher.start()
+        logsetup.event(
+            log,
+            logging.INFO,
+            "launcher_started",
+            start_method=self.launcher.name,
+            pid_launcher=self.launcher.pid,
+            start_ms=round((time.monotonic() - started) * 1000, 2),
+        )
+
+    def on_orphan_exit(self, handle: WorkerHandle) -> None:
+        """An orphaned worker's pidfd became readable: it exited, cause unknown.
+
+        Why:
+            We can't waitpid a process that isn't our child, so its exit status is lost; the
+            death is classified `unknown_exit` and its jobs become worker_lost (spec/04 §6).
+
+        Args:
+            handle: the orphaned worker.
+        """
+        self.arb.drain_worker(handle)
+        death = Death(
+            "unknown_exit",
+            None,
+            None,
+            False,
+            False,
+            logging.ERROR,
+            "orphaned worker exited; its exit status is unknowable",
+        )
+        self._finish_death(handle, death, handle.state is WorkerState.BOOTING)
 
     # --- worker messages ---------------------------------------------------------------------
 
@@ -435,7 +588,7 @@ class Supervisor:
         grace = self.arb.config.master.graceful_timeout_s
         self.arb.timers.cancel(handle.deadline_timer)
         handle.deadline_timer = self.arb.timers.schedule(
-            time.monotonic() + grace, "retire_deadline", handle.pid
+            time.monotonic() + grace, "retire_deadline", handle
         )
         logsetup.event(
             log,
@@ -469,6 +622,8 @@ class Supervisor:
             sig: the signal (SIGKILL or SIGTERM).
             reason: why (job_timeout, heartbeat_timeout, boot_timeout, grace_expired, quit).
         """
+        if handle.pid == 0:
+            return  # WHY: a forkserver worker whose pid isn't known yet can't be signalled
         handle.kill_sent = sig
         handle.kill_reason = reason
         logsetup.event(
@@ -528,12 +683,15 @@ class Supervisor:
 
         Why:
             Every worker death, expected or not, ends here: classify it, settle its jobs, and keep
-            the worker count up.
+            the worker count up. The forkserver's own death is routed to on_server_died.
 
         Args:
             pid: the dead process.
             wait_status: its status from waitpid.
         """
+        if self.launcher.owns_pid(pid):
+            self.on_server_died(wait_status)
+            return
         handle = self.arb.workers.by_pid.get(pid)
         if handle is None:
             return
@@ -542,7 +700,20 @@ class Supervisor:
         # left in the channel FIRST, or finished jobs would be wrongly marked LOST (ADR-034).
         self.arb.drain_worker(handle)
         death = classify_exit(wait_status, handle.state, handle.kill_sent)
-        was_booting = handle.state is WorkerState.BOOTING
+        self._finish_death(handle, death, handle.state is WorkerState.BOOTING)
+
+    def _finish_death(self, handle: WorkerHandle, death: Death, was_booting: bool) -> None:
+        """Log a death, resolve the worker's jobs, forget it, and keep the worker count up.
+
+        Why:
+            Shared by normal deaths (waitpid or a forkserver report) and orphan deaths (pidfd).
+
+        Args:
+            handle: the dead worker.
+            death: its classification.
+            was_booting: whether it died before becoming READY (a boot failure).
+        """
+        pid = handle.pid
         evidence = self._oom_evidence(death)
         self._count_death(death)
         logsetup.event(
@@ -568,6 +739,7 @@ class Supervisor:
         self._resolve_inflight(handle, death)
         self.arb.timers.cancel(handle.deadline_timer)
         handle.state = WorkerState.EXITED
+        self.arb.unwatch_orphan(handle)
         self.arb.unregister_worker(handle)
         if was_booting:
             self._on_boot_failure(death)
@@ -706,7 +878,7 @@ class Supervisor:
 
     # --- timers ------------------------------------------------------------------------------
 
-    def on_deadline(self, kind: str, pid: int) -> None:
+    def on_deadline(self, kind: str, handle: WorkerHandle) -> None:
         """A boot or retire deadline passed: kill the worker (spec/04 §5.2 step 5, §5.6).
 
         Why:
@@ -715,11 +887,11 @@ class Supervisor:
 
         Args:
             kind: "boot_deadline" or "retire_deadline".
-            pid: the worker's pid.
+            handle: the worker.
         """
-        handle = self.arb.workers.by_pid.get(pid)
-        if handle is None:
+        if handle.state is WorkerState.EXITED:
             return
+        pid = handle.pid
         if kind == "boot_deadline" and handle.state is WorkerState.BOOTING:
             logsetup.event(
                 log,

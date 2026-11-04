@@ -1,0 +1,5 @@
+the spawn child crashed with RuntimeError:
+    An attempt has been made to start a new process before the
+    current process has finished its bootstrapping phase.
+    This probably means that you are not using fork to start your
+the parent still printed: (nothing)

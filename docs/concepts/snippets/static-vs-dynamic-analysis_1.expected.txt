@@ -1,0 +1,3 @@
+a: lambda target (real bug)            flagged: True
+b: lambda via a variable (real bug)    flagged: False
+c: lambda under fork context (works)   flagged: True

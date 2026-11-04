@@ -1,0 +1,24 @@
+{
+  "entry": "distilled.py",
+  "must_fire": [
+    {
+      "rule": "FA002",
+      "path": "distilled.py",
+      "line": 47
+    }
+  ],
+  "may_fire": [],
+  "must_not_fire": [
+    {
+      "rule": "FA001"
+    },
+    {
+      "rule": "FA003"
+    }
+  ],
+  "behaviour": {
+    "fork": "ok",
+    "forkserver": "differs",
+    "spawn": "differs"
+  }
+}

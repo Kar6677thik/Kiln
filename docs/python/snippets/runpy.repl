@@ -1,0 +1,10 @@
+import runpy, tempfile, pathlib
+folder = tempfile.mkdtemp()
+path = pathlib.Path(folder) / "hello.py"
+_ = path.write_text("GREETING = 'hi'\nprint('running as', __name__)\n")
+result = runpy.run_path(str(path))
+result["GREETING"]
+_ = runpy.run_path(str(path), run_name="__main__")
+_ = runpy.run_module("json.tool", run_name="not_main")
+import subprocess, sys
+subprocess.run([sys.executable, "-m", "json.tool", "--help"], capture_output=True, text=True).stdout.splitlines()[0]

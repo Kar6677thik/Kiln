@@ -69,3 +69,20 @@ def test_package_version_matches_pyproject() -> None:
     """
     pyproject = tomllib.loads((REPO_ROOT / "pyproject.toml").read_text(encoding="utf-8"))
     assert pyproject["project"]["version"] == kiln.__version__
+
+
+def test_kiln_forkcheck_passes_its_arguments_through(capsys: pytest.CaptureFixture[str]) -> None:
+    """`kiln forkcheck PATH --format json` reaches kiln.forkcheck.main with its own options.
+
+    The oslo case has an error-level finding, so the exit code is 1 (K2 spec §5.8).
+    """
+    case = REPO_ROOT / "corpus" / "real" / "oslo-lockutils"
+    assert cli.main(["forkcheck", str(case), "--format", "json"]) == 1
+    assert '"FA002"' in capsys.readouterr().out
+
+
+def test_kiln_help_lists_forkcheck(capsys: pytest.CaptureFixture[str]) -> None:
+    """`kiln --help` mentions forkcheck, although forkcheck parses its own arguments."""
+    with pytest.raises(SystemExit):
+        cli.main(["--help"])
+    assert "forkcheck" in capsys.readouterr().out

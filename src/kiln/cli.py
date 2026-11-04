@@ -36,7 +36,7 @@ import time
 from pathlib import Path
 
 # PY: importing our own package's modules looks exactly like importing the standard library.
-from kiln import __version__, doctor
+from kiln import __version__, doctor, forkcheck
 from kiln.bench.load import LoadOptions, run_load
 from kiln.client import KilnClient
 from kiln.config import ConfigError, load_config
@@ -139,7 +139,11 @@ def _add_server_commands(
     serve.add_argument("--pidfile", help="write the master's pid here (for kiln reload/stop/scale)")
     serve.add_argument("--labs", action="store_true", help="register the labs.* experiment tasks")
     serve.add_argument("--debug", action="store_true", help="enable debug operations (K6)")
-    serve.add_argument("--start-method", choices=("fork", "spawn", "forkserver"), help="(K2)")
+    serve.add_argument(
+        "--start-method",
+        choices=("fork", "spawn", "forkserver"),
+        help="how workers are created (default: fork; docs/concepts/start-methods.md)",
+    )
     serve.add_argument(
         "--executor", choices=("sync", "threads", "interpreters", "asyncio"), help="(K4)"
     )
@@ -290,6 +294,13 @@ def build_parser() -> argparse.ArgumentParser:
         "--milestone",
         metavar="Kn",
         help="treat warnings needed by this milestone (or earlier) as failures, e.g. K1",
+    )
+    # WHY: listed here so `kiln --help` shows it; main() hands its arguments straight to
+    # kiln.forkcheck.main, which has its own parser (`kiln forkcheck --help`).
+    subcommands.add_parser(
+        "forkcheck",
+        help="find code that silently depends on fork (spawn/forkserver breakage)",
+        add_help=False,
     )
     _add_server_commands(subcommands)
     _add_client_commands(subcommands)
@@ -541,9 +552,14 @@ def main(argv: list[str] | None = None) -> int:
     Returns:
         The exit code for the operating system (0 success, 1 failure, 2 usage error).
     """
+    arguments = sys.argv[1:] if argv is None else argv
+    if arguments[:1] == ["forkcheck"]:
+        # WHY: forkcheck is a self-contained tool with its own options and exit codes
+        # (K2 spec §5.8); passing everything after the word "forkcheck" keeps them intact.
+        return forkcheck.main(arguments[1:])
     parser = build_parser()
     # WHY: parse_args() prints an error and exits with code 2 by itself on bad usage.
-    args = parser.parse_args(argv)
+    args = parser.parse_args(arguments)
     handlers = {
         "doctor": _cmd_doctor,
         "serve": _cmd_serve,
